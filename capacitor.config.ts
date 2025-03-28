@@ -6,7 +6,9 @@ const config: CapacitorConfig = {
   appName: 'Dronacharya Diet Plan',
   webDir: 'dist',
   server: {
-    androidScheme: 'https'
+    androidScheme: 'https',
+    url: 'https://aeb552de-085d-457a-834d-a8509c836e13.lovableproject.com?forceHideBadge=true',
+    cleartext: true
   },
   plugins: {
     SplashScreen: {
