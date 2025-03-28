@@ -92,27 +92,45 @@
 
   body {
     @apply bg-dark-theme text-foreground;
+    font-feature-settings: "ss01", "ss02", "cv01", "cv02", "cv03";
   }
 }
 
 @layer components {
   .card-gradient {
-    background: linear-gradient(135deg, rgba(255,107,107,0.1) 0%, rgba(78,205,196,0.1) 100%);
+    background: linear-gradient(135deg, rgba(255,107,107,0.2) 0%, rgba(78,205,196,0.2) 100%);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   }
   
   .glass-card {
-    @apply bg-black/20 backdrop-blur-sm border border-white/10 shadow-xl;
+    @apply bg-black/20 backdrop-blur-md border border-white/10 shadow-xl;
   }
   
   .button-glow {
     @apply relative overflow-hidden;
-    box-shadow: 0 0 10px rgba(78, 205, 196, 0.5);
+    box-shadow: 0 0 15px rgba(78, 205, 196, 0.5);
   }
   
   .button-glow:hover {
-    box-shadow: 0 0 20px rgba(78, 205, 196, 0.8);
+    box-shadow: 0 0 25px rgba(78, 205, 196, 0.8);
+  }
+  
+  .neo-card {
+    background: linear-gradient(145deg, #1c1c1c, #232323);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.2),
+                -10px -10px 20px rgba(255, 255, 255, 0.03);
+  }
+  
+  .shimmer-effect {
+    background: linear-gradient(90deg, 
+      rgba(255, 255, 255, 0) 0%, 
+      rgba(255, 255, 255, 0.05) 50%, 
+      rgba(255, 255, 255, 0) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
   }
 }
 
@@ -127,5 +145,31 @@
 }
 
 .animate-float {
-  animation: float 3s ease-in-out infinite;
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #FF6B6B, #4ECDC4);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #ff8383, #6cded7);
+}
+
+/* Improved focus styles */
+:focus-visible {
+  outline: 2px solid rgba(78, 205, 196, 0.5);
+  outline-offset: 2px;
 }

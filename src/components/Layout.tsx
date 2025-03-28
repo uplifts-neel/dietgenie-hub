@@ -20,7 +20,7 @@ const Layout = () => {
         <Outlet />
       </main>
       
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-coral-red/20 to-turquoise/20 backdrop-blur-lg border-t border-white/10">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-coral-red/30 to-turquoise/30 backdrop-blur-xl border-t border-white/20 shadow-lg">
         <div className="flex justify-around items-center h-16 max-w-4xl mx-auto">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
@@ -29,19 +29,32 @@ const Layout = () => {
                 key={item.path}
                 onClick={() => navigate(item.path)}
                 className={cn(
-                  "flex flex-col items-center justify-center w-full h-full transition-all duration-200",
+                  "flex flex-col items-center justify-center w-full h-full transition-all duration-300",
                   isActive 
-                    ? "text-coral-red" 
+                    ? "text-coral-red translate-y-[-4px]" 
                     : "text-gray-400 hover:text-turquoise"
                 )}
               >
-                <item.icon 
-                  className={cn(
-                    "w-6 h-6 transition-transform",
-                    isActive && "scale-110"
-                  )} 
-                />
-                <span className="text-xs mt-1 font-medium">{item.label}</span>
+                <div className={cn(
+                  "relative p-2 rounded-full transition-all duration-300",
+                  isActive && "bg-white/10 shadow-lg"
+                )}>
+                  <item.icon 
+                    className={cn(
+                      "w-5 h-5 transition-transform",
+                      isActive && "scale-110"
+                    )} 
+                  />
+                  {isActive && (
+                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-coral-red rounded-full" />
+                  )}
+                </div>
+                <span className={cn(
+                  "text-xs mt-1 font-medium transition-all",
+                  isActive ? "opacity-100" : "opacity-70"
+                )}>
+                  {item.label}
+                </span>
               </button>
             );
           })}

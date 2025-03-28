@@ -29,19 +29,23 @@ const QuantitySelector = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="glass-card border-none max-w-md mx-auto">
+      <DialogContent className="glass-card border-none bg-gradient-to-br from-black/60 to-black/40 backdrop-blur-xl max-w-md mx-auto">
         <DialogHeader>
-          <DialogTitle className="text-white text-center">Select Quantity for {mealName}</DialogTitle>
+          <DialogTitle className="text-white text-xl font-bold text-center">
+            <span className="bg-gradient-to-r from-coral-red to-turquoise bg-clip-text text-transparent">
+              Select Quantity for {mealName}
+            </span>
+          </DialogTitle>
         </DialogHeader>
-        <div className="grid grid-cols-3 gap-2 mt-4">
+        <div className="grid grid-cols-3 gap-3 mt-6">
           {options.map((option) => (
             <Button
               key={option}
               variant="outline"
-              className={`py-6 ${
+              className={`py-6 transition-all duration-300 ${
                 selected === option
-                  ? "bg-turquoise text-white border-turquoise"
-                  : "bg-white/10 text-white border-white/20 hover:bg-white/20"
+                  ? "bg-gradient-to-r from-coral-red/80 to-turquoise/80 text-white border-none shadow-lg"
+                  : "bg-white/5 text-white/80 border-white/10 hover:bg-white/10 hover:text-white hover:border-white/20"
               }`}
               onClick={() => setSelected(option)}
             >
@@ -49,14 +53,18 @@ const QuantitySelector = ({
             </Button>
           ))}
         </div>
-        <div className="flex justify-end mt-4 space-x-2">
-          <Button variant="ghost" onClick={onClose} className="text-white">
+        <div className="flex justify-end mt-6 space-x-3">
+          <Button 
+            variant="ghost" 
+            onClick={onClose} 
+            className="text-white/70 hover:text-white hover:bg-white/10"
+          >
             Cancel
           </Button>
           <Button 
             onClick={handleSelect} 
             disabled={!selected}
-            className="bg-coral-red hover:bg-coral-red/90 text-white"
+            className="bg-gradient-to-r from-coral-red to-turquoise hover:opacity-90 text-white button-glow"
           >
             Add to Plan
           </Button>
