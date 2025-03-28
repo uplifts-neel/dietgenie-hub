@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { getMealById } from "@/data/mealOptions";
 
 // Define types
 export type Member = {
@@ -13,9 +14,16 @@ export type MealItem = {
   name: string;
   category: string;
   quantity: string;
+  mealId?: string; // Reference to the original meal
 };
 
 export type TimeSlot = "Morning" | "Afternoon" | "BeforeGym" | "AfterGym" | "Evening" | "Night";
+
+export type NutritionSummary = {
+  protein: number;
+  carbs: number;
+  fats: number;
+};
 
 export type DietPlan = {
   id: string;
@@ -25,6 +33,8 @@ export type DietPlan = {
   weight: string;
   date: string;
   meals: Record<TimeSlot, MealItem[]>;
+  nutrition?: NutritionSummary;
+  isPinned?: boolean;
 };
 
 export type Profile = {
@@ -40,9 +50,13 @@ type AppContextType = {
   profile: Profile;
   addMember: (member: Member) => void;
   addDietPlan: (plan: DietPlan) => void;
+  updateDietPlan: (plan: DietPlan) => void;
+  togglePinPlan: (planId: string) => void;
   updateProfile: (profile: Partial<Profile>) => void;
   getMemberById: (id: string) => Member | undefined;
   getDietPlansByMemberId: (memberId: string) => DietPlan[];
+  calculateNutrition: (meals: Record<TimeSlot, MealItem[]>) => NutritionSummary;
+  deleteDietPlan: (planId: string) => void;
 };
 
 // Create context
@@ -84,12 +98,67 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem("profile", JSON.stringify(profile));
   }, [profile]);
 
+  const calculateNutrition = (meals: Record<TimeSlot, MealItem[]>): NutritionSummary => {
+    const summary: NutritionSummary = {
+      protein: 0,
+      carbs: 0,
+      fats: 0
+    };
+
+    Object.values(meals).forEach(mealList => {
+      mealList.forEach(meal => {
+        if (meal.mealId) {
+          const mealData = getMealById(meal.mealId);
+          if (mealData && mealData.nutrition[meal.quantity]) {
+            const nutrition = mealData.nutrition[meal.quantity];
+            summary.protein += nutrition.protein;
+            summary.carbs += nutrition.carbs;
+            summary.fats += nutrition.fats;
+          }
+        }
+      });
+    });
+
+    return summary;
+  };
+
   const addMember = (member: Member) => {
     setMembers(prev => [...prev, member]);
   };
 
   const addDietPlan = (plan: DietPlan) => {
-    setDietPlans(prev => [...prev, plan]);
+    // Calculate and add nutrition data
+    const nutrition = calculateNutrition(plan.meals);
+    const updatedPlan = {
+      ...plan,
+      nutrition,
+      isPinned: false
+    };
+    setDietPlans(prev => [...prev, updatedPlan]);
+  };
+
+  const updateDietPlan = (plan: DietPlan) => {
+    // Calculate nutrition
+    const nutrition = calculateNutrition(plan.meals);
+    const updatedPlan = {
+      ...plan,
+      nutrition
+    };
+    setDietPlans(prev => prev.map(p => p.id === plan.id ? updatedPlan : p));
+  };
+
+  const togglePinPlan = (planId: string) => {
+    setDietPlans(prev => 
+      prev.map(plan => 
+        plan.id === planId 
+          ? { ...plan, isPinned: !plan.isPinned } 
+          : plan
+      )
+    );
+  };
+
+  const deleteDietPlan = (planId: string) => {
+    setDietPlans(prev => prev.filter(plan => plan.id !== planId));
   };
 
   const updateProfile = (updatedProfile: Partial<Profile>) => {
@@ -112,9 +181,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         profile,
         addMember, 
         addDietPlan, 
+        updateDietPlan,
+        togglePinPlan,
         updateProfile,
         getMemberById,
-        getDietPlansByMemberId
+        getDietPlansByMemberId,
+        calculateNutrition,
+        deleteDietPlan
       }}
     >
       {children}

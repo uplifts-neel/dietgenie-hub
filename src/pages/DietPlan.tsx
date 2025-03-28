@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext, TimeSlot, MealItem } from "@/context/AppContext";
 import { Input } from "@/components/ui/input";
@@ -8,13 +8,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import MealCategorySelector from "@/components/MealCategorySelector";
+import NutritionSummary from "@/components/NutritionSummary";
 import { Check, Share2 } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "sonner";
 
 const DietPlan = () => {
   const navigate = useNavigate();
-  const { addMember, addDietPlan } = useAppContext();
+  const { addMember, addDietPlan, calculateNutrition } = useAppContext();
   
   const [step, setStep] = useState(1);
   const [admissionNumber, setAdmissionNumber] = useState("");
@@ -30,6 +31,18 @@ const DietPlan = () => {
     Evening: [],
     Night: []
   });
+
+  const [nutritionSummary, setNutritionSummary] = useState({
+    protein: 0,
+    carbs: 0,
+    fats: 0
+  });
+
+  // Calculate nutrition whenever meals change
+  useEffect(() => {
+    const summary = calculateNutrition(meals);
+    setNutritionSummary(summary);
+  }, [meals, calculateNutrition]);
 
   const timeSlots: { value: TimeSlot; label: string }[] = [
     { value: "Morning", label: "Morning" },
@@ -216,6 +229,8 @@ const DietPlan = () => {
                 <p className="text-white/80">Weight: {weight} kg</p>
               </div>
               
+              <NutritionSummary nutrition={nutritionSummary} />
+              
               <div className="bg-white/5 p-4 rounded-lg space-y-4">
                 <h3 className="text-lg text-white font-medium mb-2">Diet Plan</h3>
                 
@@ -255,6 +270,13 @@ const DietPlan = () => {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Nutrition Summary for Step 2 */}
+      {step === 2 && (
+        <div className="mt-4">
+          <NutritionSummary nutrition={nutritionSummary} />
+        </div>
       )}
 
       {/* Navigation buttons */}

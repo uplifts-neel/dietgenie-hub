@@ -43,7 +43,8 @@ const MealCategorySelector = ({
       onAddMeal({
         name: quantitySelector.meal.name,
         category: quantitySelector.meal.category,
-        quantity
+        quantity,
+        mealId: quantitySelector.meal.id // Add mealId for nutrition tracking
       });
     }
   };
