@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { getMealById } from "@/data/mealOptions";
 
@@ -37,10 +36,24 @@ export type DietPlan = {
   isPinned?: boolean;
 };
 
+export type Stat = {
+  title: string;
+  value: string | number;
+  icon: string;
+  color: string;
+};
+
+export type ContactInfo = {
+  phone: string;
+  instagram: string;
+};
+
 export type Profile = {
   name: string;
   photo: string;
   achievements: string[];
+  contactInfo: ContactInfo;
+  stats: Stat[];
 };
 
 // Define context type
@@ -81,7 +94,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       : {
           name: "Trainer",
           photo: "",
-          achievements: ["Certified Fitness Trainer", "Nutrition Specialist"]
+          achievements: ["Certified Fitness Trainer", "Nutrition Specialist"],
+          contactInfo: {
+            phone: "+91 9999999999",
+            instagram: "dronacharya_gym"
+          },
+          stats: [
+            {
+              title: "Active Members",
+              value: 0,
+              icon: "Users",
+              color: "from-coral-red/80 to-coral-red/20"
+            },
+            {
+              title: "Trainers",
+              value: 5,
+              icon: "UserPlus",
+              color: "from-turquoise/80 to-turquoise/20"
+            },
+            {
+              title: "Operational Hours",
+              value: "5AM - 10PM",
+              icon: "Clock",
+              color: "from-purple-500/80 to-purple-500/20"
+            }
+          ]
         };
   });
 
@@ -127,7 +164,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addDietPlan = (plan: DietPlan) => {
-    // Calculate and add nutrition data
     const nutrition = calculateNutrition(plan.meals);
     const updatedPlan = {
       ...plan,
@@ -138,7 +174,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateDietPlan = (plan: DietPlan) => {
-    // Calculate nutrition
     const nutrition = calculateNutrition(plan.meals);
     const updatedPlan = {
       ...plan,
