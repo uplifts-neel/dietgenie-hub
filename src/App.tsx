@@ -1,9 +1,10 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { AuthProvider } from "@/hooks/use-auth";
 import SplashScreen from "./pages/SplashScreen";
 import Home from "./pages/Home";
 import DietPlan from "./pages/DietPlan";
@@ -12,9 +13,6 @@ import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import Layout from "./components/Layout";
 import EditDietPlanModal from "./components/EditDietPlanModal";
-import Auth from "./pages/Auth";
-import Registration from "./pages/Registration";
-import Fees from "./pages/Fees";
 import { App as CapApp } from '@capacitor/app';
 
 const queryClient = new QueryClient({
@@ -33,8 +31,8 @@ const CapacitorBackButton = () => {
 
   useEffect(() => {
     const handleBackButton = () => {
-      // If on splash screen, auth, or home, exit app
-      if (location.pathname === '/' || location.pathname === '/home' || location.pathname === '/auth') {
+      // If on splash screen or home, exit app
+      if (location.pathname === '/' || location.pathname === '/home') {
         CapApp.exitApp();
       } else {
         // Otherwise navigate back
@@ -79,21 +77,18 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Toaster />
-      <Sonner position="top-center" theme="dark" />
-      <BrowserRouter>
-        <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner position="top-center" theme="dark" />
+        <BrowserRouter>
           {isCapacitorInitialized && <CapacitorBackButton />}
           <div className="min-h-screen overflow-x-hidden">
             <Routes>
               <Route path="/" element={<SplashScreen />} />
-              <Route path="/auth" element={<Auth />} />
               <Route element={<Layout />}>
                 <Route path="/home" element={<Home />} />
                 <Route path="/diet-plan" element={<DietPlan />} />
                 <Route path="/history" element={<History />} />
-                <Route path="/registration" element={<Registration />} />
-                <Route path="/fees" element={<Fees />} />
                 <Route path="/profile" element={<Profile />} />
               </Route>
               {/* Special route for editing diet plans */}
@@ -101,8 +96,8 @@ const App = () => {
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>
-        </AuthProvider>
-      </BrowserRouter>
+        </BrowserRouter>
+      </TooltipProvider>
     </QueryClientProvider>
   );
 };
