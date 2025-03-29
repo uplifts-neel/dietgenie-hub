@@ -9,26 +9,19 @@ const Home = () => {
   const { profile, members, dietPlans } = useAppContext();
   const navigate = useNavigate();
 
-  const stats = [
-    {
-      title: "Active Members",
-      value: members.length,
-      icon: Users,
-      color: "from-coral-red/80 to-coral-red/20",
-    },
-    {
-      title: "Trainers",
-      value: 5,
-      icon: UserPlus,
-      color: "from-turquoise/80 to-turquoise/20",
-    },
-    {
-      title: "Operational Hours",
-      value: "5AM - 10PM",
-      icon: Clock,
-      color: "from-purple-500/80 to-purple-500/20",
-    },
-  ];
+  // Dynamically create stats from profile
+  const stats = profile.stats.map(stat => {
+    const IconComponent = {
+      "Users": Users,
+      "UserPlus": UserPlus,
+      "Clock": Clock
+    }[stat.icon] || Users;
+    
+    return {
+      ...stat,
+      icon: IconComponent
+    };
+  });
 
   return (
     <div className="min-h-screen pb-20">
@@ -72,44 +65,6 @@ const Home = () => {
             </span>
           ))}
         </div>
-      </div>
-
-      {/* Contact & Social Media Section */}
-      <div className="mt-8 px-6">
-        <Card className="glass-card overflow-hidden animate-fade-in border-none">
-          <CardContent className="p-4">
-            <h3 className="text-lg font-semibold text-white mb-3">Connect With Us</h3>
-            <div className="flex flex-col space-y-3">
-              <a 
-                href="tel:+919999999999" 
-                className="flex items-center p-2 rounded-lg bg-gradient-to-r from-coral-red/20 to-coral-red/5 hover:from-coral-red/30 hover:to-coral-red/10 transition-all"
-              >
-                <div className="p-2 rounded-full bg-coral-red/30 mr-3">
-                  <Phone className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-white text-sm">Phone</p>
-                  <p className="text-white font-medium">+91 9999999999</p>
-                </div>
-              </a>
-              
-              <a 
-                href="https://instagram.com/dronacharya_gym" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="flex items-center p-2 rounded-lg bg-gradient-to-r from-turquoise/20 to-turquoise/5 hover:from-turquoise/30 hover:to-turquoise/10 transition-all"
-              >
-                <div className="p-2 rounded-full bg-turquoise/30 mr-3">
-                  <Instagram className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-white text-sm">Instagram</p>
-                  <p className="text-white font-medium">@dronacharya_gym</p>
-                </div>
-              </a>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Quick Actions */}
@@ -183,6 +138,44 @@ const Home = () => {
           </div>
         </div>
       )}
+
+      {/* Contact & Social Media Section - Moved to the bottom */}
+      <div className="mt-8 px-6 mb-20">
+        <Card className="glass-card overflow-hidden animate-fade-in border-none">
+          <CardContent className="p-4">
+            <h3 className="text-lg font-semibold text-white mb-3">Connect With Us</h3>
+            <div className="flex flex-col space-y-3">
+              <a 
+                href={`tel:${profile.contactInfo.phone}`} 
+                className="flex items-center p-2 rounded-lg bg-gradient-to-r from-coral-red/20 to-coral-red/5 hover:from-coral-red/30 hover:to-coral-red/10 transition-all"
+              >
+                <div className="p-2 rounded-full bg-coral-red/30 mr-3">
+                  <Phone className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-white text-sm">Phone</p>
+                  <p className="text-white font-medium">{profile.contactInfo.phone}</p>
+                </div>
+              </a>
+              
+              <a 
+                href={`https://instagram.com/${profile.contactInfo.instagram}`} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="flex items-center p-2 rounded-lg bg-gradient-to-r from-turquoise/20 to-turquoise/5 hover:from-turquoise/30 hover:to-turquoise/10 transition-all"
+              >
+                <div className="p-2 rounded-full bg-turquoise/30 mr-3">
+                  <Instagram className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-white text-sm">Instagram</p>
+                  <p className="text-white font-medium">@{profile.contactInfo.instagram}</p>
+                </div>
+              </a>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
