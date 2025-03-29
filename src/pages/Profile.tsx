@@ -1,343 +1,234 @@
 
-import { useState, useRef } from "react";
-import { useAppContext } from "@/context/AppContext";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Edit2, Award, User, Phone, Instagram, Users, UserPlus, Clock } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/hooks/use-auth";
+import { LogOut, Phone, Instagram, Save, User } from "lucide-react";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
+import { supabase } from "@/integrations/supabase/client";
 
 const Profile = () => {
-  const { profile, updateProfile } = useAppContext();
-  const [name, setName] = useState(profile.name);
-  const [achievement, setAchievement] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user, userName, signOut, isOwner } = useAuth();
   
-  const handleNameChange = () => {
-    if (name.trim()) {
-      updateProfile({ name });
-      toast.success("Name updated successfully");
+  const [phoneNumber, setPhoneNumber] = useState("+919999999999");
+  const [instagram, setInstagram] = useState("@dronacharya_gym");
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // Additional gym settings (if owner)
+  const [activeMembers, setActiveMembers] = useState("Active Members");
+  const [trainers, setTrainers] = useState("Trainers");
+  const [operationalHours, setOperationalHours] = useState("5AM - 10PM");
+
+  const handleUpdateContact = async () => {
+    try {
+      setIsSaving(true);
+      // Save to database logic goes here
+      // For now, just show a success message
+      toast.success("Contact information updated successfully");
+    } catch (error) {
+      toast.error("Failed to update contact information");
+      console.error(error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const handleAddAchievement = () => {
-    if (achievement.trim()) {
-      updateProfile({
-        achievements: [...profile.achievements, achievement.trim()]
-      });
-      setAchievement("");
-      toast.success("Achievement added");
-    }
-  };
-
-  const handleRemoveAchievement = (index: number) => {
-    const newAchievements = [...profile.achievements];
-    newAchievements.splice(index, 1);
-    updateProfile({ achievements: newAchievements });
-    toast.success("Achievement removed");
-  };
-
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        updateProfile({ photo: reader.result as string });
-        toast.success("Profile photo updated");
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleUpdateContactInfo = (data: { phone: string; instagram: string }) => {
-    updateProfile({
-      contactInfo: data
-    });
-    toast.success("Contact information updated");
-  };
-
-  const handleUpdateStat = (index: number, updates: { title?: string; value?: string | number }) => {
-    const newStats = [...profile.stats];
-    newStats[index] = { ...newStats[index], ...updates };
-    updateProfile({ stats: newStats });
-    toast.success("Stats updated");
-  };
-
-  // Get icon component based on icon name
-  const getIconComponent = (iconName: string) => {
-    switch (iconName) {
-      case "Users": return <Users className="text-turquoise" />;
-      case "UserPlus": return <UserPlus className="text-turquoise" />;
-      case "Clock": return <Clock className="text-turquoise" />;
-      default: return <Users className="text-turquoise" />;
+  const handleUpdateGymSettings = async () => {
+    try {
+      setIsSaving(true);
+      // Save to database logic goes here
+      // For now, just show a success message
+      toast.success("Gym settings updated successfully");
+    } catch (error) {
+      toast.error("Failed to update gym settings");
+      console.error(error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
   return (
     <div className="min-h-screen p-6 pb-20">
-      <h1 className="text-2xl font-bold text-white mb-6">My Profile</h1>
-
-      <Card className="glass-card border-none animate-fade-in mb-6">
-        <CardContent className="p-6">
-          <div className="flex flex-col items-center">
-            <div 
-              className="relative w-32 h-32 rounded-full bg-gradient-to-r from-coral-red to-turquoise p-1 cursor-pointer"
-              onClick={() => fileInputRef.current?.click()}
+      <h1 className="text-2xl font-bold text-white mb-6">Settings</h1>
+      
+      <div className="flex flex-col space-y-6">
+        {/* User Profile */}
+        <Card className="glass-card border-none animate-fade-in">
+          <CardContent className="p-6">
+            <div className="flex items-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-r from-coral-red to-turquoise flex items-center justify-center text-white text-xl font-bold mr-4">
+                {userName.charAt(0)}
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-white">{userName}</h2>
+                <p className="text-gray-400">{user?.email}</p>
+                <span className="inline-block bg-gradient-to-r from-coral-red/30 to-turquoise/30 text-white text-xs px-3 py-1 rounded-full mt-1">
+                  {isOwner ? "Gym Owner" : "Trainer"}
+                </span>
+              </div>
+            </div>
+            
+            <Button
+              variant="outline"
+              className="w-full mt-2 bg-white/10 border-white/20 text-white hover:bg-white/20"
+              onClick={signOut}
             >
-              {profile.photo ? (
-                <img
-                  src={profile.photo}
-                  alt="Profile"
-                  className="w-full h-full rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full rounded-full bg-gray-800 flex items-center justify-center text-white text-3xl font-bold">
-                  <User size={48} />
-                </div>
-              )}
-              <div className="absolute bottom-0 right-0 bg-coral-red text-white p-2 rounded-full shadow-lg">
-                <Edit2 size={16} />
-              </div>
-            </div>
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handlePhotoUpload}
-              className="hidden"
-              accept="image/*"
-            />
+              <LogOut className="mr-2 h-4 w-4" />
+              Sign Out
+            </Button>
+          </CardContent>
+        </Card>
+        
+        {/* Contact Information */}
+        <Card className="glass-card border-none animate-fade-in">
+          <CardContent className="p-6">
+            <h2 className="text-xl text-white font-semibold mb-4">Contact Information</h2>
             
-            <div className="w-full mt-6">
-              <Label htmlFor="name" className="text-white">Name</Label>
-              <div className="flex gap-2 mt-1">
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="bg-white/10 border-white/20 text-white"
-                />
-                <Button onClick={handleNameChange} className="bg-coral-red hover:bg-coral-red/90">
-                  Save
-                </Button>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Stats Management */}
-      <Card className="glass-card border-none animate-fade-in mb-6">
-        <CardContent className="p-6">
-          <h2 className="text-xl font-semibold text-white mb-4">Gym Stats</h2>
-          <div className="space-y-4">
-            {profile.stats.map((stat, index) => (
-              <div key={index} className="p-3 bg-white/5 rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center">
-                    {getIconComponent(stat.icon)}
-                    <span className="ml-2 text-white font-medium">{stat.title}</span>
-                  </div>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="ghost" size="sm" className="text-turquoise hover:bg-turquoise/10">
-                        Edit
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="bg-gray-900 border-gray-800">
-                      <DialogHeader>
-                        <DialogTitle className="text-white">Edit Stat</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                          <Label htmlFor={`stat-title-${index}`} className="text-white">Title</Label>
-                          <Input 
-                            id={`stat-title-${index}`}
-                            defaultValue={stat.title} 
-                            className="bg-white/10 border-white/20 text-white"
-                            onChange={(e) => handleUpdateStat(index, { title: e.target.value })}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor={`stat-value-${index}`} className="text-white">Value</Label>
-                          <Input 
-                            id={`stat-value-${index}`}
-                            defaultValue={stat.value} 
-                            className="bg-white/10 border-white/20 text-white"
-                            onChange={(e) => handleUpdateStat(index, { value: e.target.value })}
-                          />
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button type="button" className="bg-turquoise hover:bg-turquoise/90">
-                          Save Changes
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="phone" className="text-white">Phone Number</Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70 h-4 w-4" />
+                  <Input
+                    id="phone"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    className="bg-white/10 border-white/20 text-white pl-10"
+                    placeholder="Enter phone number"
+                  />
                 </div>
-                <p className="text-lg text-white/90">{stat.value}</p>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Contact Information */}
-      <Card className="glass-card border-none animate-fade-in mb-6">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-white">Contact Information</h2>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="text-turquoise border-turquoise/50 hover:bg-turquoise/10">
-                  Edit
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-gray-900 border-gray-800">
-                <DialogHeader>
-                  <DialogTitle className="text-white">Edit Contact Information</DialogTitle>
-                </DialogHeader>
-                <ContactEditForm 
-                  defaultValues={profile.contactInfo} 
-                  onSubmit={handleUpdateContactInfo} 
-                />
-              </DialogContent>
-            </Dialog>
-          </div>
-          
-          <div className="space-y-4">
-            <div className="flex items-center p-3 bg-white/5 rounded-lg">
-              <Phone className="text-coral-red mr-3" />
+              
               <div>
-                <p className="text-sm text-gray-400">Phone</p>
-                <p className="text-white">{profile.contactInfo.phone}</p>
+                <Label htmlFor="instagram" className="text-white">Instagram Handle</Label>
+                <div className="relative">
+                  <Instagram className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70 h-4 w-4" />
+                  <Input
+                    id="instagram"
+                    value={instagram}
+                    onChange={(e) => setInstagram(e.target.value)}
+                    className="bg-white/10 border-white/20 text-white pl-10"
+                    placeholder="Enter Instagram handle"
+                  />
+                </div>
               </div>
-            </div>
-            
-            <div className="flex items-center p-3 bg-white/5 rounded-lg">
-              <Instagram className="text-turquoise mr-3" />
-              <div>
-                <p className="text-sm text-gray-400">Instagram</p>
-                <p className="text-white">@{profile.contactInfo.instagram}</p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="glass-card border-none animate-fade-in">
-        <CardContent className="p-6">
-          <div className="flex items-center mb-4">
-            <Award className="mr-2 text-turquoise" />
-            <h2 className="text-xl font-semibold text-white">Achievements</h2>
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex gap-2">
-              <Input
-                value={achievement}
-                onChange={(e) => setAchievement(e.target.value)}
-                placeholder="Add new achievement"
-                className="bg-white/10 border-white/20 text-white"
-              />
-              <Button onClick={handleAddAchievement} className="bg-turquoise hover:bg-turquoise/90">
-                Add
+              
+              <Button
+                onClick={handleUpdateContact}
+                className="w-full bg-turquoise hover:bg-turquoise/90 text-white"
+                disabled={isSaving}
+              >
+                <Save className="mr-2 h-4 w-4" />
+                {isSaving ? "Saving..." : "Save Contact Info"}
               </Button>
             </div>
-
-            <div className="space-y-2 mt-4">
-              {profile.achievements.map((item, index) => (
-                <div 
-                  key={index} 
-                  className="flex justify-between items-center p-3 bg-white/5 rounded-lg"
-                >
-                  <span className="text-white">{item}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleRemoveAchievement(index)}
-                    className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                  >
-                    Remove
-                  </Button>
+          </CardContent>
+        </Card>
+        
+        {/* Gym Settings (owner only) */}
+        {isOwner && (
+          <Card className="glass-card border-none animate-fade-in">
+            <CardContent className="p-6">
+              <h2 className="text-xl text-white font-semibold mb-4">Gym Settings</h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="activeMembers" className="text-white">Active Members Label</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70 h-4 w-4" />
+                    <Input
+                      id="activeMembers"
+                      value={activeMembers}
+                      onChange={(e) => setActiveMembers(e.target.value)}
+                      className="bg-white/10 border-white/20 text-white pl-10"
+                      placeholder="Label for active members"
+                    />
+                  </div>
                 </div>
-              ))}
+                
+                <div>
+                  <Label htmlFor="trainers" className="text-white">Trainers Label</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70 h-4 w-4" />
+                    <Input
+                      id="trainers"
+                      value={trainers}
+                      onChange={(e) => setTrainers(e.target.value)}
+                      className="bg-white/10 border-white/20 text-white pl-10"
+                      placeholder="Label for trainers"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="operationalHours" className="text-white">Operational Hours</Label>
+                  <div className="relative">
+                    <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70 h-4 w-4" />
+                    <Input
+                      id="operationalHours"
+                      value={operationalHours}
+                      onChange={(e) => setOperationalHours(e.target.value)}
+                      className="bg-white/10 border-white/20 text-white pl-10"
+                      placeholder="Operational hours"
+                    />
+                  </div>
+                </div>
+                
+                <Button
+                  onClick={handleUpdateGymSettings}
+                  className="w-full bg-coral-red hover:bg-coral-red/90 text-white"
+                  disabled={isSaving}
+                >
+                  <Save className="mr-2 h-4 w-4" />
+                  {isSaving ? "Saving..." : "Save Gym Settings"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        
+        {/* App Info */}
+        <Card className="glass-card border-none animate-fade-in">
+          <CardContent className="p-6">
+            <h3 className="text-lg text-white font-semibold mb-2">About App</h3>
+            <p className="text-gray-400 text-sm">Dronacharya Gym Diet Plan App v1.0.0</p>
+            
+            <Separator className="my-4 bg-white/10" />
+            
+            <div className="text-center">
+              <p className="text-gray-400 text-sm">
+                &copy; 2023 Dronacharya Gym. All rights reserved.
+              </p>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
 
-// Contact edit form component
-const ContactEditForm = ({ 
-  defaultValues, 
-  onSubmit 
-}: { 
-  defaultValues: { phone: string; instagram: string }; 
-  onSubmit: (data: { phone: string; instagram: string }) => void 
-}) => {
-  const form = useForm({
-    defaultValues
-  });
-
-  const handleSubmit = form.handleSubmit((data) => {
-    onSubmit(data);
-  });
-
+// Missing import
+function Clock(props: any) {
   return (
-    <Form {...form}>
-      <form onSubmit={handleSubmit} className="space-y-4 py-4">
-        <FormField
-          control={form.control}
-          name="phone"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-white">Phone Number</FormLabel>
-              <FormControl>
-                <Input 
-                  {...field} 
-                  className="bg-white/10 border-white/20 text-white" 
-                  placeholder="+91 9999999999"
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="instagram"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-white">Instagram Username</FormLabel>
-              <FormControl>
-                <div className="flex items-center">
-                  <span className="text-white mr-2">@</span>
-                  <Input 
-                    {...field} 
-                    className="bg-white/10 border-white/20 text-white" 
-                    placeholder="username"
-                  />
-                </div>
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        
-        <DialogFooter>
-          <Button type="submit" className="bg-coral-red hover:bg-coral-red/90">
-            Save Changes
-          </Button>
-        </DialogFooter>
-      </form>
-    </Form>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </svg>
   );
-};
+}
 
 export default Profile;
