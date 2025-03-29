@@ -13,7 +13,6 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [role, setRole] = useState<"owner" | "trainer">("owner");
   const [isLoading, setIsLoading] = useState(false);
 
   // Redirect if already logged in
@@ -31,7 +30,7 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    await signUp(email, password, name, role);
+    await signUp(email, password, name);
     setIsLoading(false);
   };
 
@@ -50,7 +49,7 @@ const Auth = () => {
         <Tabs defaultValue="signin" className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger value="signin">Sign In</TabsTrigger>
-            <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            <TabsTrigger value="signup">Trainer Registration</TabsTrigger>
           </TabsList>
 
           <TabsContent value="signin">
@@ -59,12 +58,11 @@ const Auth = () => {
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-white">
-                      Email
+                      Username or Email
                     </Label>
                     <Input
                       id="email"
-                      type="email"
-                      placeholder="Enter your email"
+                      placeholder="Enter username or email"
                       className="bg-white/10 border-white/20 text-white"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -105,11 +103,11 @@ const Auth = () => {
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="signup-name" className="text-white">
-                      Full Name
+                      Trainer Name
                     </Label>
                     <Input
                       id="signup-name"
-                      placeholder="Enter your full name"
+                      placeholder="Enter trainer's full name"
                       className="bg-white/10 border-white/20 text-white"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
@@ -124,7 +122,7 @@ const Auth = () => {
                     <Input
                       id="signup-email"
                       type="email"
-                      placeholder="Enter your email"
+                      placeholder="Enter trainer's email"
                       className="bg-white/10 border-white/20 text-white"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -148,42 +146,12 @@ const Auth = () => {
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="role" className="text-white">
-                      Role
-                    </Label>
-                    <div className="grid grid-cols-2 gap-4">
-                      <Button
-                        type="button"
-                        className={`${
-                          role === "owner"
-                            ? "bg-coral-red"
-                            : "bg-white/10"
-                        } text-white`}
-                        onClick={() => setRole("owner")}
-                      >
-                        Gym Owner
-                      </Button>
-                      <Button
-                        type="button"
-                        className={`${
-                          role === "trainer"
-                            ? "bg-turquoise"
-                            : "bg-white/10"
-                        } text-white`}
-                        onClick={() => setRole("trainer")}
-                      >
-                        Trainer
-                      </Button>
-                    </div>
-                  </div>
-
                   <Button
                     type="submit"
                     className="w-full bg-gradient-to-r from-coral-red to-turquoise hover:from-coral-red/90 hover:to-turquoise/90 text-white py-5 mt-4"
                     disabled={isLoading}
                   >
-                    {isLoading ? "Creating Account..." : "Create Account"}
+                    {isLoading ? "Creating Account..." : "Register as Trainer"}
                   </Button>
                 </form>
               </CardContent>

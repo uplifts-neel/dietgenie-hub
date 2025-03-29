@@ -9,7 +9,7 @@ type AuthContextType = {
   user: User | null;
   session: Session | null;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, name: string, role: "owner" | "trainer") => Promise<void>;
+  signUp: (email: string, password: string, name: string) => Promise<void>;
   signOut: () => Promise<void>;
   loading: boolean;
   isOwner: boolean;
@@ -18,6 +18,12 @@ type AuthContextType = {
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const PREDEFINED_OWNER = {
+  email: "the.gym@dronacharya.com",
+  password: "surender9818",
+  name: "Dronacharya Gym Owner"
+};
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -83,17 +89,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      // Check if user is trying to sign in as the predefined owner
+      if (email.toLowerCase() === "the.gym" && password === "surender9818") {
+        // Special flow for the predefined owner
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: PREDEFINED_OWNER.email,
+          password: PREDEFINED_OWNER.password,
+        });
 
-      if (error) throw error;
-      
-      if (data.user) {
-        checkUserRole(data.user.id);
-        toast.success("Signed in successfully!");
-        navigate("/home");
+        if (error) throw error;
+        
+        if (data.user) {
+          // Check if owner account exists in user_roles
+          const { data: roleData, error: roleError } = await supabase
+            .from("user_roles")
+            .select("*")
+            .eq("user_id", data.user.id)
+            .single();
+            
+          // If owner account doesn't exist in user_roles, create it
+          if (roleError || !roleData) {
+            const { error: insertError } = await supabase
+              .from("user_roles")
+              .insert({
+                user_id: data.user.id,
+                role: "owner",
+                name: PREDEFINED_OWNER.name
+              });
+              
+            if (insertError) throw insertError;
+          }
+          
+          setIsOwner(true);
+          setIsTrainer(false);
+          setUserName(PREDEFINED_OWNER.name);
+          toast.success("Signed in as Gym Owner!");
+          navigate("/home");
+        }
+      } else {
+        // Normal sign in flow for trainers
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) throw error;
+        
+        if (data.user) {
+          checkUserRole(data.user.id);
+          toast.success("Signed in successfully!");
+          navigate("/home");
+        }
       }
     } catch (error: any) {
       toast.error(error.message || "Failed to sign in");
@@ -101,8 +147,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signUp = async (email: string, password: string, name: string, role: "owner" | "trainer") => {
+  const signUp = async (email: string, password: string, name: string) => {
     try {
+      // Only allow trainer role signups (gym owner is predefined)
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -116,7 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .from("user_roles")
           .insert({
             user_id: data.user.id,
-            role,
+            role: "trainer", // Only trainers can register
             name,
           });
 
