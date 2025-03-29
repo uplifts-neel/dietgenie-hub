@@ -60,7 +60,6 @@ const Fees = () => {
     setIsSearching(true);
     try {
       const member = await getMemberByAdmissionNumber(admissionNumber);
-      // Properly cast the member's gym_plan to the correct type
       setSelectedMember({
         ...member,
         gym_plan: member.gym_plan as GymMember["gym_plan"]
@@ -296,7 +295,7 @@ const Fees = () => {
               <Button onClick={() => setSelectedFee(null)}>Cancel</Button>
               {selectedFee.status === 'pending' ? (
                 <Button
-                  variant="primary"
+                  variant="default"
                   onClick={() => markAsPaid(selectedFee)}
                   disabled={isMarkingPaid}
                 >

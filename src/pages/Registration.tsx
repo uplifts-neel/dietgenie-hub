@@ -11,7 +11,7 @@ import { CheckCircle2, UserPlus } from "lucide-react";
 
 const Registration = () => {
   const navigate = useNavigate();
-  const { addMember } = useMembers();
+  const { addMember, getNextAdmissionNumber } = useMembers();
   
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
@@ -25,18 +25,26 @@ const Registration = () => {
     e.preventDefault();
     setIsLoading(true);
     
-    const result = await addMember({
-      name,
-      address,
-      phone_number: phoneNumber,
-      gym_plan: gymPlan
-    });
-    
-    setIsLoading(false);
-    
-    if (result) {
-      setRegistered(true);
-      setAdmissionNumber(result.admission_number);
+    try {
+      // Get the next admission number
+      const newAdmissionNumber = await getNextAdmissionNumber();
+      
+      const result = await addMember({
+        name,
+        address,
+        phone_number: phoneNumber,
+        gym_plan: gymPlan,
+        admission_number: newAdmissionNumber
+      });
+      
+      if (result) {
+        setRegistered(true);
+        setAdmissionNumber(result.admission_number);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
     }
   };
 

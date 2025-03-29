@@ -1,4 +1,14 @@
+
 import { TimeSlot, MealItem } from "@/context/AppContext";
+
+export type TimeSlot = "breakfast" | "morningSnack" | "lunch" | "eveningSnack" | "dinner";
+
+export type MealItem = {
+  name: string;
+  category: MealCategory;
+  quantity: string;
+  mealId?: string;
+};
 
 export type MealCategory = 
   | "Proteins" 
