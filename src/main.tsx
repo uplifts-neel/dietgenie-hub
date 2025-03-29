@@ -4,7 +4,11 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import App from './App.tsx'
 import './index.css'
 
-createRoot(document.getElementById("root")!).render(
+// Create the root first
+const root = createRoot(document.getElementById("root")!);
+
+// Then render the app with proper provider nesting
+root.render(
   <TooltipProvider>
     <App />
   </TooltipProvider>
