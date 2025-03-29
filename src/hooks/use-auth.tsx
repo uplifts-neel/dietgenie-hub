@@ -8,8 +8,8 @@ import { toast } from "sonner";
 type AuthContextType = {
   user: User | null;
   session: Session | null;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, name: string) => Promise<void>;
+  signIn: (username: string, password: string) => Promise<void>;
+  signUp: (username: string, password: string, name: string) => Promise<void>;
   signOut: () => Promise<void>;
   loading: boolean;
   isOwner: boolean;
@@ -20,6 +20,7 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const PREDEFINED_OWNER = {
+  username: "the.gym",
   email: "the.gym@dronacharya.com",
   password: "surender9818",
   name: "Dronacharya Gym Owner"
@@ -87,10 +88,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (username: string, password: string) => {
     try {
       // Check if user is trying to sign in as the predefined owner
-      if (email.toLowerCase() === "the.gym" && password === "surender9818") {
+      if (username.toLowerCase() === "the.gym" && password === "surender9818") {
         // Special flow for the predefined owner
         const { data, error } = await supabase.auth.signInWithPassword({
           email: PREDEFINED_OWNER.email,
@@ -127,9 +128,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           navigate("/home");
         }
       } else {
-        // Normal sign in flow for trainers
+        // For normal trainers, we need to get their email using username
+        const { data: trainerData, error: trainerError } = await supabase
+          .from("trainer_accounts")
+          .select("email")
+          .eq("username", username)
+          .single();
+          
+        if (trainerError) {
+          // If username doesn't exist, show friendly error
+          toast.error("Invalid username or password");
+          return;
+        }
+          
+        // Sign in with email and password
         const { data, error } = await supabase.auth.signInWithPassword({
-          email,
+          email: trainerData.email,
           password,
         });
 
@@ -142,13 +156,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     } catch (error: any) {
-      toast.error(error.message || "Failed to sign in");
+      toast.error("Invalid username or password");
       console.error("Sign in error:", error);
     }
   };
 
-  const signUp = async (email: string, password: string, name: string) => {
+  const signUp = async (username: string, password: string, name: string) => {
     try {
+      // Generate a unique email based on username
+      const email = `${username}@dronacharya-trainer.com`;
+      
       // Only allow trainer role signups (gym owner is predefined)
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -158,6 +175,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
 
       if (data.user) {
+        // Store username mapping in trainer_accounts table
+        const { error: trainerError } = await supabase
+          .from("trainer_accounts")
+          .insert({
+            user_id: data.user.id,
+            username,
+            email
+          });
+          
+        if (trainerError) throw trainerError;
+      
         // Create user role record
         const { error: roleError } = await supabase
           .from("user_roles")
