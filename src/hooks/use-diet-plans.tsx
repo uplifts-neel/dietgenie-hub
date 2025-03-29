@@ -1,9 +1,9 @@
+
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { MealCategory } from "@/data/mealOptions";
-import { TimeSlot, MealItem } from "@/context/AppContext";
+import { TimeSlot, MealItem } from "@/data/mealOptions";
 
 export interface DietPlan {
   id: string;
