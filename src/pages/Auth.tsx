@@ -10,7 +10,7 @@ import { Navigate } from "react-router-dom";
 
 const Auth = () => {
   const { signIn, signUp, user } = useAuth();
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -23,14 +23,14 @@ const Auth = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    await signIn(username, password);
+    await signIn(email, password);
     setIsLoading(false);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    await signUp(username, password, name);
+    await signUp(email, password, name);
     setIsLoading(false);
   };
 
@@ -57,15 +57,15 @@ const Auth = () => {
               <CardContent className="pt-6">
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="username" className="text-white">
-                      Username
+                    <Label htmlFor="email" className="text-white">
+                      Username or Email
                     </Label>
                     <Input
-                      id="username"
-                      placeholder="Enter username"
+                      id="email"
+                      placeholder="Enter username or email"
                       className="bg-white/10 border-white/20 text-white"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       required
                     />
                   </div>
@@ -116,15 +116,16 @@ const Auth = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="signup-username" className="text-white">
-                      Username
+                    <Label htmlFor="signup-email" className="text-white">
+                      Email
                     </Label>
                     <Input
-                      id="signup-username"
-                      placeholder="Create a username"
+                      id="signup-email"
+                      type="email"
+                      placeholder="Enter trainer's email"
                       className="bg-white/10 border-white/20 text-white"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       required
                     />
                   </div>

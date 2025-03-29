@@ -1,11 +1,29 @@
 
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, createContext, useContext } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
-import { AuthContext, AuthContextType } from "@/context/AuthContext";
-import { signInWithUsernameAndPassword, signUpUser, signOutUser } from "@/services/auth-service";
-import { checkUserRole } from "@/utils/auth-utils";
+import { toast } from "sonner";
+
+type AuthContextType = {
+  user: User | null;
+  session: Session | null;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, name: string) => Promise<void>;
+  signOut: () => Promise<void>;
+  loading: boolean;
+  isOwner: boolean;
+  isTrainer: boolean;
+  userName: string;
+};
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const PREDEFINED_OWNER = {
+  email: "the.gym@dronacharya.com",
+  password: "surender9818",
+  name: "Dronacharya Gym Owner"
+};
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -17,6 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
@@ -30,12 +49,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     );
 
+    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        updateUserRole(session.user.id);
+        checkUserRole(session.user.id);
       } else {
         setLoading(false);
       }
@@ -44,45 +64,130 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  async function updateUserRole(userId: string) {
+  async function checkUserRole(userId: string) {
     try {
-      const { isOwner: ownerStatus, isTrainer: trainerStatus, userName: name } = await checkUserRole(userId);
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role, name")
+        .eq("user_id", userId)
+        .single();
+
+      if (error) throw error;
       
-      setIsOwner(ownerStatus);
-      setIsTrainer(trainerStatus);
-      setUserName(name);
+      if (data) {
+        setIsOwner(data.role === "owner");
+        setIsTrainer(data.role === "trainer");
+        setUserName(data.name);
+      }
       
       setLoading(false);
     } catch (error) {
-      console.error("Error updating user role:", error);
+      console.error("Error checking user role:", error);
       setLoading(false);
     }
   }
 
-  const signIn = async (username: string, password: string) => {
-    const result = await signInWithUsernameAndPassword(username, password);
-    
-    if (result.user) {
-      setUser(result.user);
-      setSession(result.session);
-      setIsOwner(result.isOwner);
-      setIsTrainer(result.isTrainer);
-      setUserName(result.userName);
-      navigate("/home");
+  const signIn = async (email: string, password: string) => {
+    try {
+      // Check if user is trying to sign in as the predefined owner
+      if (email.toLowerCase() === "the.gym" && password === "surender9818") {
+        // Special flow for the predefined owner
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: PREDEFINED_OWNER.email,
+          password: PREDEFINED_OWNER.password,
+        });
+
+        if (error) throw error;
+        
+        if (data.user) {
+          // Check if owner account exists in user_roles
+          const { data: roleData, error: roleError } = await supabase
+            .from("user_roles")
+            .select("*")
+            .eq("user_id", data.user.id)
+            .single();
+            
+          // If owner account doesn't exist in user_roles, create it
+          if (roleError || !roleData) {
+            const { error: insertError } = await supabase
+              .from("user_roles")
+              .insert({
+                user_id: data.user.id,
+                role: "owner",
+                name: PREDEFINED_OWNER.name
+              });
+              
+            if (insertError) throw insertError;
+          }
+          
+          setIsOwner(true);
+          setIsTrainer(false);
+          setUserName(PREDEFINED_OWNER.name);
+          toast.success("Signed in as Gym Owner!");
+          navigate("/home");
+        }
+      } else {
+        // Normal sign in flow for trainers
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) throw error;
+        
+        if (data.user) {
+          checkUserRole(data.user.id);
+          toast.success("Signed in successfully!");
+          navigate("/home");
+        }
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to sign in");
+      console.error("Sign in error:", error);
     }
   };
 
-  const signUp = async (username: string, password: string, name: string) => {
-    const success = await signUpUser(username, password, name);
-    if (success) {
-      navigate("/auth");
+  const signUp = async (email: string, password: string, name: string) => {
+    try {
+      // Only allow trainer role signups (gym owner is predefined)
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      if (data.user) {
+        // Create user role record
+        const { error: roleError } = await supabase
+          .from("user_roles")
+          .insert({
+            user_id: data.user.id,
+            role: "trainer", // Only trainers can register
+            name,
+          });
+
+        if (roleError) throw roleError;
+
+        toast.success("Account created successfully! Please sign in.");
+        navigate("/auth");
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to create account");
+      console.error("Sign up error:", error);
     }
   };
 
   const signOut = async () => {
-    const success = await signOutUser();
-    if (success) {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
       navigate("/auth");
+      toast.success("Signed out successfully");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to sign out");
+      console.error("Sign out error:", error);
     }
   };
 
