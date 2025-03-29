@@ -1,11 +1,11 @@
 
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { TimeSlot, MealItem } from "@/context/AppContext";
-import { useAuth } from "./use-auth";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { TimeSlot, MealItem } from "@/data/mealOptions";
 
-export type DietPlan = {
+export interface DietPlan {
   id: string;
   member_id: string;
   created_by: string;
@@ -17,24 +17,16 @@ export type DietPlan = {
     fats: number;
   };
   is_pinned: boolean;
-  member_name?: string;
-  admission_number?: string;
-};
+  member_name: string;
+  admission_number: string;
+}
 
-export function useDietPlans() {
+export const useDietPlans = () => {
   const [dietPlans, setDietPlans] = useState<DietPlan[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (user) {
-      fetchDietPlans();
-    }
-  }, [user]);
-
-  async function fetchDietPlans() {
+  const fetchDietPlans = useCallback(async () => {
     try {
-      setLoading(true);
       const { data, error } = await supabase
         .from("diet_plans")
         .select(`
@@ -43,118 +35,111 @@ export function useDietPlans() {
         `)
         .order("date", { ascending: false });
 
-      if (error) throw error;
-      
-      // Transform the data to match our expected format
-      const transformedData = data.map(plan => ({
+      if (error) {
+        throw error;
+      }
+
+      const formattedPlans = data.map((plan) => ({
         id: plan.id,
         member_id: plan.member_id,
         created_by: plan.created_by,
         date: plan.date,
         meals: plan.meals as Record<TimeSlot, MealItem[]>,
-        nutrition: plan.nutrition,
+        nutrition: plan.nutrition as {
+          protein: number;
+          carbs: number;
+          fats: number;
+        },
         is_pinned: plan.is_pinned,
         member_name: plan.gym_members?.name,
-        admission_number: plan.gym_members?.admission_number
+        admission_number: plan.gym_members?.admission_number,
       }));
-      
-      setDietPlans(transformedData);
+
+      setDietPlans(formattedPlans);
+      return formattedPlans;
     } catch (error: any) {
-      console.error("Error fetching diet plans:", error);
-      toast.error("Failed to load diet plans");
-    } finally {
-      setLoading(false);
+      toast.error("Failed to fetch diet plans: " + error.message);
+      return [];
     }
-  }
+  }, []);
 
-  async function addDietPlan(memberId: string, meals: Record<TimeSlot, MealItem[]>, nutrition: { protein: number; carbs: number; fats: number; }) {
-    try {
-      if (!user) throw new Error("You must be logged in to create a diet plan");
-      
-      const { data, error } = await supabase
-        .from("diet_plans")
-        .insert({
-          member_id: memberId,
-          created_by: user.id,
-          meals,
-          nutrition
-        })
-        .select(`
-          *,
-          gym_members:member_id (name, admission_number)
-        `)
-        .single();
+  const { isLoading } = useQuery({
+    queryKey: ["dietPlans"],
+    queryFn: fetchDietPlans,
+  });
 
-      if (error) throw error;
-      
-      const newPlan = {
-        id: data.id,
-        member_id: data.member_id,
-        created_by: data.created_by,
-        date: data.date,
-        meals: data.meals as Record<TimeSlot, MealItem[]>,
-        nutrition: data.nutrition,
-        is_pinned: data.is_pinned,
-        member_name: data.gym_members?.name,
-        admission_number: data.gym_members?.admission_number
-      };
-      
-      setDietPlans(prev => [newPlan, ...prev]);
-      toast.success("Diet plan created successfully");
-      return newPlan;
-    } catch (error: any) {
-      console.error("Error adding diet plan:", error);
-      toast.error(error.message || "Failed to create diet plan");
-      return null;
-    }
-  }
+  const addDietPlan = useCallback(
+    async (newPlan: Omit<DietPlan, "id" | "member_name" | "admission_number">) => {
+      try {
+        const { data, error } = await supabase
+          .from("diet_plans")
+          .insert([newPlan])
+          .select(`
+            *,
+            gym_members:member_id (name, admission_number)
+          `);
 
-  async function togglePinPlan(planId: string) {
-    try {
-      const plan = dietPlans.find(p => p.id === planId);
-      if (!plan) return;
-      
-      const { error } = await supabase
-        .from("diet_plans")
-        .update({ is_pinned: !plan.is_pinned })
-        .eq("id", planId);
+        if (error) {
+          throw error;
+        }
 
-      if (error) throw error;
-      
-      setDietPlans(prev => 
-        prev.map(p => p.id === planId ? { ...p, is_pinned: !p.is_pinned } : p)
-      );
-      
-      toast.success(plan.is_pinned ? "Diet plan unpinned" : "Diet plan pinned");
-    } catch (error: any) {
-      console.error("Error toggling pin status:", error);
-      toast.error("Failed to update diet plan");
-    }
-  }
+        const formattedNewPlan: DietPlan = {
+          id: data[0].id,
+          member_id: data[0].member_id,
+          created_by: data[0].created_by,
+          date: data[0].date,
+          meals: data[0].meals as Record<TimeSlot, MealItem[]>,
+          nutrition: data[0].nutrition as {
+            protein: number;
+            carbs: number;
+            fats: number;
+          },
+          is_pinned: data[0].is_pinned,
+          member_name: data[0].gym_members?.name,
+          admission_number: data[0].gym_members?.admission_number,
+        };
 
-  async function deleteDietPlan(planId: string) {
-    try {
-      const { error } = await supabase
-        .from("diet_plans")
-        .delete()
-        .eq("id", planId);
+        setDietPlans((prev) => [formattedNewPlan, ...prev]);
+        queryClient.invalidateQueries({ queryKey: ["dietPlans"] });
+        return formattedNewPlan;
+      } catch (error: any) {
+        toast.error("Failed to add diet plan: " + error.message);
+        throw error;
+      }
+    },
+    [queryClient]
+  );
 
-      if (error) throw error;
-      
-      setDietPlans(prev => prev.filter(p => p.id !== planId));
-      toast.success("Diet plan deleted successfully");
-    } catch (error: any) {
-      console.error("Error deleting diet plan:", error);
-      toast.error("Failed to delete diet plan");
-    }
-  }
+  const togglePinDietPlan = useCallback(
+    async (id: string, isPinned: boolean) => {
+      try {
+        const { error } = await supabase
+          .from("diet_plans")
+          .update({ is_pinned: isPinned })
+          .eq("id", id);
+
+        if (error) {
+          throw error;
+        }
+
+        setDietPlans((prev) =>
+          prev.map((plan) =>
+            plan.id === id ? { ...plan, is_pinned: isPinned } : plan
+          )
+        );
+        queryClient.invalidateQueries({ queryKey: ["dietPlans"] });
+      } catch (error: any) {
+        toast.error("Failed to update diet plan: " + error.message);
+      }
+    },
+    [queryClient]
+  );
 
   return {
     dietPlans,
-    loading,
+    isLoading,
     addDietPlan,
-    togglePinPlan,
-    deleteDietPlan,
-    refreshDietPlans: fetchDietPlans
+    togglePinDietPlan,
+    refetchDietPlans: fetchDietPlans,
   };
-}
+};

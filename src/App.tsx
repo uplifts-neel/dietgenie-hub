@@ -1,7 +1,5 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -81,32 +79,30 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner position="top-center" theme="dark" />
-        <BrowserRouter>
-          <AuthProvider>
-            {isCapacitorInitialized && <CapacitorBackButton />}
-            <div className="min-h-screen overflow-x-hidden">
-              <Routes>
-                <Route path="/" element={<SplashScreen />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route element={<Layout />}>
-                  <Route path="/home" element={<Home />} />
-                  <Route path="/diet-plan" element={<DietPlan />} />
-                  <Route path="/history" element={<History />} />
-                  <Route path="/registration" element={<Registration />} />
-                  <Route path="/fees" element={<Fees />} />
-                  <Route path="/profile" element={<Profile />} />
-                </Route>
-                {/* Special route for editing diet plans */}
-                <Route path="/diet-plan/edit" element={<EditDietPlanModal />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </div>
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
+      <Toaster />
+      <Sonner position="top-center" theme="dark" />
+      <BrowserRouter>
+        <AuthProvider>
+          {isCapacitorInitialized && <CapacitorBackButton />}
+          <div className="min-h-screen overflow-x-hidden">
+            <Routes>
+              <Route path="/" element={<SplashScreen />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route element={<Layout />}>
+                <Route path="/home" element={<Home />} />
+                <Route path="/diet-plan" element={<DietPlan />} />
+                <Route path="/history" element={<History />} />
+                <Route path="/registration" element={<Registration />} />
+                <Route path="/fees" element={<Fees />} />
+                <Route path="/profile" element={<Profile />} />
+              </Route>
+              {/* Special route for editing diet plans */}
+              <Route path="/diet-plan/edit" element={<EditDietPlanModal />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </div>
+        </AuthProvider>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 };

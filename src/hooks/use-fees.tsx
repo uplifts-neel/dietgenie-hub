@@ -1,31 +1,29 @@
 
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-export type FeeRecord = {
+export type FeeStatus = "pending" | "paid" | "overdue";
+
+export interface FeeRecord {
   id: string;
   member_id: string;
   amount: number;
   payment_date: string | null;
   due_date: string;
   duration: string;
-  status: "paid" | "pending" | "overdue";
-  member_name?: string;
-  admission_number?: string;
-};
+  status: FeeStatus;
+  member_name: string;
+  admission_number: string;
+}
 
-export function useFees() {
+export const useFees = () => {
   const [fees, setFees] = useState<FeeRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    fetchFees();
-  }, []);
-
-  async function fetchFees() {
+  const fetchFees = useCallback(async () => {
     try {
-      setLoading(true);
       const { data, error } = await supabase
         .from("fees")
         .select(`
@@ -34,180 +32,150 @@ export function useFees() {
         `)
         .order("due_date", { ascending: true });
 
-      if (error) throw error;
-      
-      // Transform the data to match our expected format
-      const transformedData = data.map(fee => ({
+      if (error) {
+        throw error;
+      }
+
+      const formattedFees = data.map((fee) => ({
         id: fee.id,
         member_id: fee.member_id,
         amount: fee.amount,
         payment_date: fee.payment_date,
         due_date: fee.due_date,
         duration: fee.duration,
-        status: fee.status,
+        status: fee.status as FeeStatus,
         member_name: fee.gym_members?.name,
-        admission_number: fee.gym_members?.admission_number
+        admission_number: fee.gym_members?.admission_number,
       }));
-      
-      setFees(transformedData);
+
+      setFees(formattedFees);
+      return formattedFees;
     } catch (error: any) {
-      console.error("Error fetching fees:", error);
-      toast.error("Failed to load fees data");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function addFeeRecord(memberId: string, amount: number, dueDate: string, duration: string) {
-    try {
-      const { data, error } = await supabase
-        .from("fees")
-        .insert({
-          member_id: memberId,
-          amount,
-          due_date: dueDate,
-          duration,
-          status: "pending"
-        })
-        .select(`
-          *,
-          gym_members:member_id (name, admission_number)
-        `)
-        .single();
-
-      if (error) throw error;
-      
-      const newFee = {
-        id: data.id,
-        member_id: data.member_id,
-        amount: data.amount,
-        payment_date: data.payment_date,
-        due_date: data.due_date,
-        duration: data.duration,
-        status: data.status,
-        member_name: data.gym_members?.name,
-        admission_number: data.gym_members?.admission_number
-      };
-      
-      setFees(prev => [newFee, ...prev]);
-      toast.success("Fee record added successfully");
-      return newFee;
-    } catch (error: any) {
-      console.error("Error adding fee record:", error);
-      toast.error(error.message || "Failed to add fee record");
-      return null;
-    }
-  }
-
-  async function updateFeeStatus(feeId: string, status: "paid" | "pending" | "overdue", paymentDate?: string) {
-    try {
-      const updateData: any = { status };
-      if (status === "paid" && paymentDate) {
-        updateData.payment_date = paymentDate;
-      }
-      
-      const { error } = await supabase
-        .from("fees")
-        .update(updateData)
-        .eq("id", feeId);
-
-      if (error) throw error;
-      
-      setFees(prev => 
-        prev.map(fee => 
-          fee.id === feeId 
-            ? { ...fee, status, payment_date: status === "paid" ? paymentDate || new Date().toISOString() : fee.payment_date } 
-            : fee
-        )
-      );
-      
-      toast.success(`Fee status updated to ${status}`);
-    } catch (error: any) {
-      console.error("Error updating fee status:", error);
-      toast.error("Failed to update fee status");
-    }
-  }
-
-  async function getFeesByMemberId(memberId: string) {
-    try {
-      const { data, error } = await supabase
-        .from("fees")
-        .select("*")
-        .eq("member_id", memberId)
-        .order("due_date", { ascending: false });
-
-      if (error) throw error;
-      
-      return data;
-    } catch (error: any) {
-      console.error("Error fetching member fees:", error);
-      toast.error("Failed to load fee records");
+      toast.error("Failed to fetch fees: " + error.message);
       return [];
     }
-  }
+  }, []);
 
-  async function getOverdueFees() {
-    try {
-      const now = new Date().toISOString();
-      
-      const { data, error } = await supabase
-        .from("fees")
-        .select(`
-          *,
-          gym_members:member_id (name, admission_number)
-        `)
-        .eq("status", "pending")
-        .lt("due_date", now)
-        .order("due_date", { ascending: true });
+  const { isLoading } = useQuery({
+    queryKey: ["fees"],
+    queryFn: fetchFees,
+  });
 
-      if (error) throw error;
-      
-      // Automatically update status to overdue
-      if (data.length > 0) {
-        const overdueFeeIds = data.map(fee => fee.id);
-        
-        const { error: updateError } = await supabase
+  const addFee = useCallback(
+    async (newFee: Omit<FeeRecord, "id" | "member_name" | "admission_number">) => {
+      try {
+        const { data, error } = await supabase
           .from("fees")
-          .update({ status: "overdue" })
-          .in("id", overdueFeeIds);
-          
-        if (updateError) throw updateError;
-        
-        // Update local state
-        setFees(prev => 
-          prev.map(fee => 
-            overdueFeeIds.includes(fee.id) 
-              ? { ...fee, status: "overdue" } 
+          .insert([newFee])
+          .select(`
+            *,
+            gym_members:member_id (name, admission_number)
+          `);
+
+        if (error) {
+          throw error;
+        }
+
+        const formattedNewFee: FeeRecord = {
+          id: data[0].id,
+          member_id: data[0].member_id,
+          amount: data[0].amount,
+          payment_date: data[0].payment_date,
+          due_date: data[0].due_date,
+          duration: data[0].duration,
+          status: data[0].status as FeeStatus,
+          member_name: data[0].gym_members?.name,
+          admission_number: data[0].gym_members?.admission_number,
+        };
+
+        setFees((prev) => [formattedNewFee, ...prev]);
+        queryClient.invalidateQueries({ queryKey: ["fees"] });
+        return formattedNewFee;
+      } catch (error: any) {
+        toast.error("Failed to add fee: " + error.message);
+        throw error;
+      }
+    },
+    [queryClient]
+  );
+
+  const updateFeeStatus = useCallback(
+    async (id: string, status: FeeStatus, payment_date?: string) => {
+      try {
+        const updateData: {
+          status: FeeStatus;
+          payment_date?: string;
+        } = {
+          status,
+        };
+
+        if (payment_date) {
+          updateData.payment_date = payment_date;
+        }
+
+        const { error } = await supabase
+          .from("fees")
+          .update(updateData)
+          .eq("id", id);
+
+        if (error) {
+          throw error;
+        }
+
+        setFees((prev) =>
+          prev.map((fee) =>
+            fee.id === id
+              ? { ...fee, status, payment_date: payment_date || fee.payment_date }
               : fee
           )
         );
+        queryClient.invalidateQueries({ queryKey: ["fees"] });
+        toast.success("Fee status updated");
+      } catch (error: any) {
+        toast.error("Failed to update fee status: " + error.message);
       }
-      
-      // Transform the data to match our expected format
-      return data.map(fee => ({
+    },
+    [queryClient]
+  );
+
+  const getOverdueFees = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from("fees")
+        .select(`
+          *,
+          gym_members:member_id (name, admission_number)
+        `)
+        .eq("status", "overdue")
+        .order("due_date", { ascending: true });
+
+      if (error) {
+        throw error;
+      }
+
+      return data.map((fee) => ({
         id: fee.id,
         member_id: fee.member_id,
         amount: fee.amount,
         payment_date: fee.payment_date,
         due_date: fee.due_date,
         duration: fee.duration,
-        status: "overdue" as const,
+        status: fee.status as FeeStatus,
         member_name: fee.gym_members?.name,
-        admission_number: fee.gym_members?.admission_number
+        admission_number: fee.gym_members?.admission_number,
       }));
     } catch (error: any) {
-      console.error("Error fetching overdue fees:", error);
+      toast.error("Failed to fetch overdue fees: " + error.message);
       return [];
     }
-  }
+  }, []);
 
   return {
     fees,
-    loading,
-    addFeeRecord,
+    isLoading,
+    addFee,
     updateFeeStatus,
-    getFeesByMemberId,
     getOverdueFees,
-    refreshFees: fetchFees
+    refetchFees: fetchFees,
   };
-}
+};
