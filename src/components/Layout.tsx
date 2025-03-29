@@ -1,65 +1,72 @@
 
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
-import { Home, User, Utensils, History } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Home, Dumbbell, History, User, UserPlus, DollarSign } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 
 const Layout = () => {
-  const navigate = useNavigate();
   const location = useLocation();
-  
-  const navItems = [
-    { icon: Home, label: "Home", path: "/home" },
-    { icon: User, label: "Profile", path: "/profile" },
-    { icon: Utensils, label: "Diet Plan", path: "/diet-plan" },
-    { icon: History, label: "History", path: "/history" },
+  const navigate = useNavigate();
+  const { user, loading } = useAuth();
+  const [activeTab, setActiveTab] = useState("");
+
+  // Redirect to auth if not logged in
+  useEffect(() => {
+    if (!loading && !user && location.pathname !== "/auth") {
+      navigate("/auth");
+    }
+  }, [user, loading, navigate, location.pathname]);
+
+  useEffect(() => {
+    // Set the active tab based on path
+    const path = location.pathname.split("/")[1];
+    setActiveTab(path);
+  }, [location]);
+
+  const tabs = [
+    { name: "home", icon: Home, label: "Home" },
+    { name: "diet-plan", icon: Dumbbell, label: "Diet Plan" },
+    { name: "registration", icon: UserPlus, label: "Register" },
+    { name: "fees", icon: DollarSign, label: "Fees" },
+    { name: "history", icon: History, label: "History" },
+    { name: "profile", icon: User, label: "Settings" },
   ];
 
+  if (loading || !user) {
+    return null; // Don't render anything while loading or if not logged in
+  }
+
   return (
-    <div className="flex flex-col min-h-screen bg-dark-theme">
-      <main className="flex-1 pb-16">
-        <Outlet />
-      </main>
+    <div className="relative min-h-screen pb-16">
+      <Outlet />
       
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-coral-red/30 to-turquoise/30 backdrop-blur-xl border-t border-white/20 shadow-lg">
-        <div className="flex justify-around items-center h-16 max-w-4xl mx-auto">
-          {navItems.map((item) => {
-            const isActive = location.pathname === item.path;
-            return (
-              <button
-                key={item.path}
-                onClick={() => navigate(item.path)}
-                className={cn(
-                  "flex flex-col items-center justify-center w-full h-full transition-all duration-300",
-                  isActive 
-                    ? "text-coral-red translate-y-[-4px]" 
-                    : "text-gray-400 hover:text-turquoise"
-                )}
-              >
-                <div className={cn(
-                  "relative p-2 rounded-full transition-all duration-300",
-                  isActive && "bg-white/10 shadow-lg"
-                )}>
-                  <item.icon 
-                    className={cn(
-                      "w-5 h-5 transition-transform",
-                      isActive && "scale-110"
-                    )} 
-                  />
-                  {isActive && (
-                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-coral-red rounded-full" />
-                  )}
-                </div>
-                <span className={cn(
-                  "text-xs mt-1 font-medium transition-all",
-                  isActive ? "opacity-100" : "opacity-70"
-                )}>
-                  {item.label}
-                </span>
-              </button>
-            );
-          })}
+      <div className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-md z-50 border-t border-white/10">
+        <div className="grid grid-cols-6 h-16">
+          {tabs.map((tab) => (
+            <button
+              key={tab.name}
+              className={`flex flex-col items-center justify-center space-y-1 transition-all ${
+                activeTab === tab.name
+                  ? "text-white"
+                  : "text-gray-400 hover:text-white/80"
+              }`}
+              onClick={() => navigate(`/${tab.name}`)}
+            >
+              <tab.icon
+                className={`h-5 w-5 ${
+                  activeTab === tab.name
+                    ? "text-white"
+                    : "text-gray-400"
+                }`}
+              />
+              <span className="text-xs">{tab.label}</span>
+              {activeTab === tab.name && (
+                <div className="absolute bottom-0 w-6 h-1 bg-gradient-to-r from-coral-red to-turquoise rounded-t-md" />
+              )}
+            </button>
+          ))}
         </div>
-      </nav>
+      </div>
     </div>
   );
 };

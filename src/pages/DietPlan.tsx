@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAppContext, TimeSlot, MealItem } from "@/context/AppContext";
+import { TimeSlot, MealItem } from "@/context/AppContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,18 +9,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import MealCategorySelector from "@/components/MealCategorySelector";
 import NutritionSummary from "@/components/NutritionSummary";
-import { Check, Share2 } from "lucide-react";
-import { v4 as uuidv4 } from "uuid";
+import { Check, Share2, Search } from "lucide-react";
 import { toast } from "sonner";
+import { useMembers, GymMember } from "@/hooks/use-members";
+import { useDietPlans } from "@/hooks/use-diet-plans";
+import { calculateNutrition } from "@/data/mealOptions";
 
 const DietPlan = () => {
   const navigate = useNavigate();
-  const { addMember, addDietPlan, calculateNutrition } = useAppContext();
+  const { getMemberByAdmissionNumber } = useMembers();
+  const { addDietPlan } = useDietPlans();
+  
+  // Member search
+  const [admissionNumber, setAdmissionNumber] = useState("");
+  const [selectedMember, setSelectedMember] = useState<GymMember | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
   
   const [step, setStep] = useState(1);
-  const [admissionNumber, setAdmissionNumber] = useState("");
-  const [memberName, setMemberName] = useState("");
-  const [weight, setWeight] = useState("");
   const [activeTimeSlot, setActiveTimeSlot] = useState<TimeSlot>("Morning");
   
   const [meals, setMeals] = useState<Record<TimeSlot, MealItem[]>>({
@@ -42,7 +47,7 @@ const DietPlan = () => {
   useEffect(() => {
     const summary = calculateNutrition(meals);
     setNutritionSummary(summary);
-  }, [meals, calculateNutrition]);
+  }, [meals]);
 
   const timeSlots: { value: TimeSlot; label: string }[] = [
     { value: "Morning", label: "Morning" },
@@ -53,14 +58,27 @@ const DietPlan = () => {
     { value: "Night", label: "Night" }
   ];
 
-  const handleNextStep = () => {
-    if (step === 1) {
-      if (!admissionNumber || !memberName || !weight) {
-        toast.error("Please fill all fields");
-        return;
-      }
+  const handleSearch = async () => {
+    if (!admissionNumber.trim()) {
+      toast.error("Please enter an admission number");
+      return;
+    }
+    
+    setIsSearching(true);
+    const member = await getMemberByAdmissionNumber(admissionNumber);
+    setIsSearching(false);
+    
+    if (member) {
+      setSelectedMember(member);
+      // If member found, automatically go to step 2
       setStep(2);
-    } else if (step === 2) {
+    } else {
+      setSelectedMember(null);
+    }
+  };
+
+  const handleNextStep = () => {
+    if (step === 2) {
       // Check if at least one meal is added
       const hasMeals = Object.values(meals).some(
         (mealArray) => mealArray.length > 0
@@ -78,6 +96,10 @@ const DietPlan = () => {
   const handlePrevStep = () => {
     if (step > 1) {
       setStep(step - 1);
+      if (step === 2) {
+        setSelectedMember(null);
+        setAdmissionNumber("");
+      }
     }
   };
 
@@ -97,31 +119,23 @@ const DietPlan = () => {
     });
   };
 
-  const handleGeneratePlan = () => {
-    const memberId = uuidv4();
-    const planId = uuidv4();
-    
-    // Add member
-    addMember({
-      id: memberId,
-      admissionNumber,
-      name: memberName,
-      weight
-    });
+  const handleGeneratePlan = async () => {
+    if (!selectedMember) {
+      toast.error("Please select a member first");
+      return;
+    }
     
     // Add diet plan
-    addDietPlan({
-      id: planId,
-      memberId,
-      memberName,
-      admissionNumber,
-      weight,
-      date: new Date().toISOString(),
-      meals
-    });
+    const result = await addDietPlan(
+      selectedMember.id, 
+      meals, 
+      nutritionSummary
+    );
     
-    toast.success("Diet plan created successfully!");
-    navigate("/history");
+    if (result) {
+      toast.success("Diet plan created successfully!");
+      navigate("/history");
+    }
   };
 
   return (
@@ -143,43 +157,40 @@ const DietPlan = () => {
       {step === 1 && (
         <Card className="glass-card border-none animate-fade-in">
           <CardContent className="p-6">
-            <h2 className="text-xl text-white font-semibold mb-4">Member Information</h2>
+            <h2 className="text-xl text-white font-semibold mb-4">Select Member</h2>
             
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="admission" className="text-white">Admission Number</Label>
-                <Input
-                  id="admission"
-                  value={admissionNumber}
-                  onChange={(e) => setAdmissionNumber(e.target.value)}
-                  className="bg-white/10 border-white/20 text-white mt-1"
-                  placeholder="Enter admission number"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="name" className="text-white">Full Name</Label>
-                <Input
-                  id="name"
-                  value={memberName}
-                  onChange={(e) => setMemberName(e.target.value)}
-                  className="bg-white/10 border-white/20 text-white mt-1"
-                  placeholder="Enter member name"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="weight" className="text-white">Current Weight (kg)</Label>
-                <Input
-                  id="weight"
-                  type="number"
-                  value={weight}
-                  onChange={(e) => setWeight(e.target.value)}
-                  className="bg-white/10 border-white/20 text-white mt-1"
-                  placeholder="Enter current weight"
-                />
-              </div>
+            <div className="flex gap-2 mb-4">
+              <Input
+                value={admissionNumber}
+                onChange={(e) => setAdmissionNumber(e.target.value)}
+                className="bg-white/10 border-white/20 text-white"
+                placeholder="Enter Admission Number"
+              />
+              <Button 
+                onClick={handleSearch}
+                className="bg-coral-red text-white hover:bg-coral-red/90"
+                disabled={isSearching}
+              >
+                <Search className="h-4 w-4" />
+              </Button>
             </div>
+            
+            {selectedMember && (
+              <div className="bg-white/10 p-4 rounded-lg animate-fade-in">
+                <h3 className="text-lg text-white font-medium mb-2">Member Details</h3>
+                <p className="text-white/80">Name: {selectedMember.name}</p>
+                <p className="text-white/80">Admission: {selectedMember.admission_number}</p>
+                <p className="text-white/80">Phone: {selectedMember.phone_number}</p>
+                <p className="text-white/80">Plan: {selectedMember.gym_plan}</p>
+                
+                <Button
+                  onClick={() => setStep(2)}
+                  className="w-full mt-4 bg-coral-red hover:bg-coral-red/90 text-white"
+                >
+                  Create Diet Plan
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
@@ -188,6 +199,12 @@ const DietPlan = () => {
         <Card className="glass-card border-none animate-fade-in">
           <CardContent className="p-6">
             <h2 className="text-xl text-white font-semibold mb-4">Meal Planning</h2>
+            
+            {selectedMember && (
+              <div className="bg-white/5 p-2 rounded-lg mb-4">
+                <p className="text-white/80 text-sm">Creating diet plan for: <span className="text-white font-medium">{selectedMember.name}</span></p>
+              </div>
+            )}
             
             <Tabs defaultValue="Morning" value={activeTimeSlot} onValueChange={(v) => setActiveTimeSlot(v as TimeSlot)}>
               <TabsList className="w-full bg-white/10 overflow-auto flex whitespace-nowrap">
@@ -222,12 +239,14 @@ const DietPlan = () => {
             <h2 className="text-xl text-white font-semibold mb-4">Plan Preview</h2>
             
             <div className="space-y-4">
-              <div className="bg-white/5 p-4 rounded-lg">
-                <h3 className="text-lg text-white font-medium mb-2">Member Details</h3>
-                <p className="text-white/80">Name: {memberName}</p>
-                <p className="text-white/80">Admission: {admissionNumber}</p>
-                <p className="text-white/80">Weight: {weight} kg</p>
-              </div>
+              {selectedMember && (
+                <div className="bg-white/5 p-4 rounded-lg">
+                  <h3 className="text-lg text-white font-medium mb-2">Member Details</h3>
+                  <p className="text-white/80">Name: {selectedMember.name}</p>
+                  <p className="text-white/80">Admission: {selectedMember.admission_number}</p>
+                  <p className="text-white/80">Phone: {selectedMember.phone_number}</p>
+                </div>
+              )}
               
               <NutritionSummary nutrition={nutritionSummary} />
               
@@ -296,6 +315,7 @@ const DietPlan = () => {
           <Button
             onClick={handleNextStep}
             className="bg-coral-red hover:bg-coral-red/90 text-white"
+            disabled={step === 1 || !selectedMember}
           >
             Next
           </Button>

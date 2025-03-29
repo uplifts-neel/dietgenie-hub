@@ -1,3 +1,5 @@
+import { TimeSlot, MealItem } from "@/context/AppContext";
+
 export type MealCategory = 
   | "Proteins" 
   | "Carbs" 
@@ -285,4 +287,28 @@ export const getNutritionForMeal = (mealId: string, quantity: string): Nutrition
   const meal = getMealById(mealId);
   if (!meal || !meal.nutrition[quantity]) return null;
   return meal.nutrition[quantity];
+};
+
+export const calculateNutrition = (meals: Record<TimeSlot, MealItem[]>) => {
+  const summary = {
+    protein: 0,
+    carbs: 0,
+    fats: 0
+  };
+
+  Object.values(meals).forEach(mealList => {
+    mealList.forEach(meal => {
+      if (meal.mealId) {
+        const mealData = getMealById(meal.mealId);
+        if (mealData && mealData.nutrition[meal.quantity]) {
+          const nutrition = mealData.nutrition[meal.quantity];
+          summary.protein += nutrition.protein;
+          summary.carbs += nutrition.carbs;
+          summary.fats += nutrition.fats;
+        }
+      }
+    });
+  });
+
+  return summary;
 };
