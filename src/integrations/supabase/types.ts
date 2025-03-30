@@ -9,13 +9,184 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      diet_plans: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          date: string
+          id: string
+          is_pinned: boolean | null
+          meals: Json
+          member_id: string | null
+          nutrition: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          date: string
+          id?: string
+          is_pinned?: boolean | null
+          meals: Json
+          member_id?: string | null
+          nutrition?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          date?: string
+          id?: string
+          is_pinned?: boolean | null
+          meals?: Json
+          member_id?: string | null
+          nutrition?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "diet_plans_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "gym_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fees: {
+        Row: {
+          amount: number
+          created_at: string | null
+          created_by: string | null
+          due_date: string
+          duration: string | null
+          id: string
+          member_id: string | null
+          payment_date: string | null
+          status: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          created_by?: string | null
+          due_date: string
+          duration?: string | null
+          id?: string
+          member_id?: string | null
+          payment_date?: string | null
+          status?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          created_by?: string | null
+          due_date?: string
+          duration?: string | null
+          id?: string
+          member_id?: string | null
+          payment_date?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fees_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "gym_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gym_members: {
+        Row: {
+          address: string | null
+          admission_number: string
+          created_at: string | null
+          created_by: string | null
+          gym_plan: string | null
+          id: string
+          name: string
+          phone_number: string | null
+          registration_date: string | null
+        }
+        Insert: {
+          address?: string | null
+          admission_number: string
+          created_at?: string | null
+          created_by?: string | null
+          gym_plan?: string | null
+          id?: string
+          name: string
+          phone_number?: string | null
+          registration_date?: string | null
+        }
+        Update: {
+          address?: string | null
+          admission_number?: string
+          created_at?: string | null
+          created_by?: string | null
+          gym_plan?: string | null
+          id?: string
+          name?: string
+          phone_number?: string | null
+          registration_date?: string | null
+        }
+        Relationships: []
+      }
+      trainer_accounts: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          user_id: string | null
+          username: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          user_id?: string | null
+          username: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          user_id?: string | null
+          username?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          role: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          role: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          role?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_next_admission_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

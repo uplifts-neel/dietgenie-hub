@@ -54,9 +54,9 @@ export async function signInWithUsernameAndPassword(username: string, password: 
         .from("trainer_accounts")
         .select("email")
         .eq("username", username)
-        .single();
+        .maybeSingle();  // Using maybeSingle instead of single to prevent errors
         
-      if (trainerError) {
+      if (trainerError || !trainerData) {
         // If username doesn't exist, show friendly error
         toast.error("Invalid username or password");
         return { user: null, session: null, isOwner: false, isTrainer: false, userName: "" };
@@ -84,8 +84,8 @@ export async function signInWithUsernameAndPassword(username: string, password: 
     
     return { user: null, session: null, isOwner: false, isTrainer: false, userName: "" };
   } catch (error: any) {
-    toast.error("Invalid username or password");
     console.error("Sign in error:", error);
+    toast.error("Invalid username or password");
     return { user: null, session: null, isOwner: false, isTrainer: false, userName: "" };
   }
 }
@@ -95,8 +95,32 @@ export async function signInWithUsernameAndPassword(username: string, password: 
  */
 export async function signUpUser(username: string, password: string, name: string) {
   try {
+    // Check if username already exists
+    const { data: existingUser, error: checkError } = await supabase
+      .from("trainer_accounts")
+      .select("username")
+      .eq("username", username)
+      .maybeSingle();
+      
+    if (existingUser) {
+      toast.error("Username already exists. Please choose another one.");
+      return false;
+    }
+    
     // Generate a unique email based on username
-    const email = `${username}@dronacharya-trainer.com`;
+    const email = `${username.toLowerCase()}@dronacharya-trainer.com`;
+    
+    // Check if email is already registered in auth system
+    const { data: userWithEmail, error: emailCheckError } = await supabase.auth.signInWithPassword({
+      email,
+      password: "dummy-password-for-check"
+    });
+    
+    // If the email exists but login failed (because of wrong password), it means email exists
+    if (emailCheckError && emailCheckError.message.includes("Invalid login credentials")) {
+      toast.error("This username is already taken. Please choose another one.");
+      return false;
+    }
     
     // Only allow trainer role signups (gym owner is predefined)
     const { data, error } = await supabase.auth.signUp({
@@ -104,7 +128,14 @@ export async function signUpUser(username: string, password: string, name: strin
       password,
     });
 
-    if (error) throw error;
+    if (error) {
+      if (error.message.includes("User already registered")) {
+        toast.error("This username is already registered. Please try another one.");
+      } else {
+        toast.error(error.message);
+      }
+      return false;
+    }
 
     if (data.user) {
       // Store username mapping in trainer_accounts table
@@ -116,7 +147,11 @@ export async function signUpUser(username: string, password: string, name: strin
           email
         });
         
-      if (trainerError) throw trainerError;
+      if (trainerError) {
+        console.error("Error creating trainer account:", trainerError);
+        toast.error("Error creating trainer account");
+        return false;
+      }
     
       // Create user role record
       const { error: roleError } = await supabase
@@ -127,7 +162,11 @@ export async function signUpUser(username: string, password: string, name: strin
           name,
         });
 
-      if (roleError) throw roleError;
+      if (roleError) {
+        console.error("Error creating user role:", roleError);
+        toast.error("Error creating user role");
+        return false;
+      }
 
       toast.success("Account created successfully! Please sign in.");
       return true;
@@ -135,8 +174,8 @@ export async function signUpUser(username: string, password: string, name: strin
     
     return false;
   } catch (error: any) {
-    toast.error(error.message || "Failed to create account");
     console.error("Sign up error:", error);
+    toast.error(error.message || "Failed to create account");
     return false;
   }
 }
@@ -152,8 +191,8 @@ export async function signOutUser() {
     toast.success("Signed out successfully");
     return true;
   } catch (error: any) {
-    toast.error(error.message || "Failed to sign out");
     console.error("Sign out error:", error);
+    toast.error(error.message || "Failed to sign out");
     return false;
   }
 }

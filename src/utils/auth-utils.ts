@@ -10,9 +10,12 @@ export async function checkUserRole(userId: string) {
       .from("user_roles")
       .select("role, name")
       .eq("user_id", userId)
-      .single();
+      .maybeSingle();
 
-    if (error) throw error;
+    if (error) {
+      console.error("Error checking user role:", error);
+      throw error;
+    }
     
     return {
       isOwner: data?.role === "owner",
