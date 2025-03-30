@@ -6,25 +6,25 @@ import { useNavigate } from "react-router-dom";
 import { Plus, Clock, Users, UserPlus, Instagram, Phone } from "lucide-react";
 
 const Home = () => {
-  const { profile, members, dietPlans } = useAppContext();
+  const { profile } = useAppContext();
   const navigate = useNavigate();
 
   const stats = [
     {
       title: "Active Members",
-      value: members.length,
+      value: profile.stats?.activeMembers || 0,
       icon: Users,
       color: "from-coral-red/80 to-coral-red/20",
     },
     {
       title: "Trainers",
-      value: 5,
+      value: profile.stats?.trainers || 5,
       icon: UserPlus,
       color: "from-turquoise/80 to-turquoise/20",
     },
     {
-      title: "Operational Hours",
-      value: "5AM - 10PM",
+      title: profile.stats?.operationalHoursTitle || "Operational Hours",
+      value: profile.stats?.operationalHours || "5AM - 10PM",
       icon: Clock,
       color: "from-purple-500/80 to-purple-500/20",
     },
@@ -36,7 +36,7 @@ const Home = () => {
       <div className="relative">
         <div className="bg-gradient-to-r from-coral-red to-turquoise py-8 px-6">
           <h1 className="text-3xl font-bold text-white text-center text-shadow drop-shadow-lg">
-            DRONACHARYA THE GYM
+            {profile.name}
           </h1>
           <p className="text-white/90 text-center mt-1">
             Sant Nagar, Burari, Delhi-110036
@@ -81,7 +81,7 @@ const Home = () => {
             <h3 className="text-lg font-semibold text-white mb-3">Connect With Us</h3>
             <div className="flex flex-col space-y-3">
               <a 
-                href="tel:+919999999999" 
+                href={`tel:${profile.contactInfo?.phone || "+919999999999"}`} 
                 className="flex items-center p-2 rounded-lg bg-gradient-to-r from-coral-red/20 to-coral-red/5 hover:from-coral-red/30 hover:to-coral-red/10 transition-all"
               >
                 <div className="p-2 rounded-full bg-coral-red/30 mr-3">
@@ -89,12 +89,12 @@ const Home = () => {
                 </div>
                 <div>
                   <p className="text-white text-sm">Phone</p>
-                  <p className="text-white font-medium">+91 9999999999</p>
+                  <p className="text-white font-medium">{profile.contactInfo?.phone || "+91 9999999999"}</p>
                 </div>
               </a>
               
               <a 
-                href="https://instagram.com/dronacharya_gym" 
+                href={`https://instagram.com/${profile.contactInfo?.instagram?.replace('@', '') || "dronacharya_gym"}`}
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="flex items-center p-2 rounded-lg bg-gradient-to-r from-turquoise/20 to-turquoise/5 hover:from-turquoise/30 hover:to-turquoise/10 transition-all"
@@ -104,7 +104,7 @@ const Home = () => {
                 </div>
                 <div>
                   <p className="text-white text-sm">Instagram</p>
-                  <p className="text-white font-medium">@dronacharya_gym</p>
+                  <p className="text-white font-medium">{profile.contactInfo?.instagram || "@dronacharya_gym"}</p>
                 </div>
               </a>
             </div>
@@ -154,35 +154,42 @@ const Home = () => {
         ))}
       </div>
 
-      {/* Recent Plans */}
-      {dietPlans.length > 0 && (
-        <div className="mt-8 px-6">
-          <h3 className="text-xl font-semibold text-white mb-4">Recent Diet Plans</h3>
-          <div className="space-y-4">
-            {dietPlans.slice(-3).reverse().map((plan) => (
-              <Card
-                key={plan.id}
-                className="glass-card animate-fade-in border-none"
-                onClick={() => navigate(`/history?plan=${plan.id}`)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h4 className="font-medium text-white">{plan.memberName}</h4>
-                      <p className="text-xs text-gray-400">
-                        {new Date(plan.date).toLocaleDateString()} • Admission #{plan.admissionNumber}
-                      </p>
-                    </div>
-                    <Button size="sm" variant="ghost" className="text-turquoise">
-                      View
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Contact Us Section */}
+      <div className="mt-8 px-6">
+        <Card className="glass-card border-none animate-fade-in">
+          <CardContent className="p-6">
+            <h3 className="text-xl font-semibold text-white mb-4">Contact Us</h3>
+            <div className="space-y-4">
+              <p className="text-white/80">
+                Have questions about our gym services or membership plans? Reach out to us directly!
+              </p>
+              
+              <div className="flex flex-col md:flex-row gap-4">
+                <Button 
+                  onClick={() => window.location.href = `tel:${profile.contactInfo?.phone || "+919999999999"}`} 
+                  className="flex-1 bg-coral-red hover:bg-coral-red/90"
+                >
+                  <Phone className="mr-2 h-5 w-5" />
+                  Call Us
+                </Button>
+                
+                <Button 
+                  onClick={() => window.open(`https://instagram.com/${profile.contactInfo?.instagram?.replace('@', '') || "dronacharya_gym"}`, '_blank')} 
+                  className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90"
+                >
+                  <Instagram className="mr-2 h-5 w-5" />
+                  DM on Instagram
+                </Button>
+              </div>
+              
+              <div className="text-center text-white/60 text-sm mt-4">
+                <p>Dronacharya The Gym</p>
+                <p>Sant Nagar, Burari, Delhi-110036</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

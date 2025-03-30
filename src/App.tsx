@@ -9,7 +9,8 @@ import SplashScreen from "./pages/SplashScreen";
 import Home from "./pages/Home";
 import DietPlan from "./pages/DietPlan";
 import History from "./pages/History";
-import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
+import Registration from "./pages/Registration";
 import NotFound from "./pages/NotFound";
 import Layout from "./components/Layout";
 import EditDietPlanModal from "./components/EditDietPlanModal";
@@ -87,9 +88,10 @@ const App = () => {
               <Route path="/" element={<SplashScreen />} />
               <Route element={<Layout />}>
                 <Route path="/home" element={<Home />} />
+                <Route path="/registration" element={<Registration />} />
                 <Route path="/diet-plan" element={<DietPlan />} />
                 <Route path="/history" element={<History />} />
-                <Route path="/profile" element={<Profile />} />
+                <Route path="/settings" element={<Settings />} />
               </Route>
               {/* Special route for editing diet plans */}
               <Route path="/diet-plan/edit" element={<EditDietPlanModal />} />

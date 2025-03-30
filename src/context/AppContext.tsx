@@ -1,13 +1,20 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { getMealById } from "@/data/mealOptions";
+import { v4 as uuidv4 } from "uuid";
 
 // Define types
 export type Member = {
   id: string;
   admissionNumber: string;
   name: string;
-  weight: string;
+  weight?: string;
+  phone?: string;
+  address?: string;
+  dateOfBirth?: string;
+  feeType?: string;
+  admissionType?: string;
+  registrationDate?: string;
 };
 
 export type MealItem = {
@@ -30,17 +37,31 @@ export type DietPlan = {
   memberId: string;
   memberName: string;
   admissionNumber: string;
-  weight: string;
+  weight?: string;
   date: string;
   meals: Record<TimeSlot, MealItem[]>;
   nutrition?: NutritionSummary;
   isPinned?: boolean;
 };
 
+export type ContactInfo = {
+  phone: string;
+  instagram: string;
+};
+
+export type GymStats = {
+  activeMembers: number;
+  trainers: number;
+  operationalHoursTitle: string;
+  operationalHours: string;
+};
+
 export type Profile = {
   name: string;
   photo: string;
   achievements: string[];
+  contactInfo?: ContactInfo;
+  stats?: GymStats;
 };
 
 // Define context type
@@ -48,12 +69,15 @@ type AppContextType = {
   members: Member[];
   dietPlans: DietPlan[];
   profile: Profile;
-  addMember: (member: Member) => void;
+  addMember: (member: Member) => string;
   addDietPlan: (plan: DietPlan) => void;
   updateDietPlan: (plan: DietPlan) => void;
   togglePinPlan: (planId: string) => void;
   updateProfile: (profile: Partial<Profile>) => void;
+  updateContactInfo: (contactInfo: ContactInfo) => void;
+  updateStats: (stats: GymStats) => void;
   getMemberById: (id: string) => Member | undefined;
+  getMemberByAdmissionNumber: (admissionNumber: string) => Member | undefined;
   getDietPlansByMemberId: (memberId: string) => DietPlan[];
   calculateNutrition: (meals: Record<TimeSlot, MealItem[]>) => NutritionSummary;
   deleteDietPlan: (planId: string) => void;
@@ -79,9 +103,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return savedProfile 
       ? JSON.parse(savedProfile) 
       : {
-          name: "Trainer",
+          name: "DRONACHARYA THE GYM",
           photo: "",
-          achievements: ["Certified Fitness Trainer", "Nutrition Specialist"]
+          achievements: ["Certified Fitness Trainer", "Nutrition Specialist"],
+          contactInfo: {
+            phone: "+91 9999999999",
+            instagram: "@dronacharya_gym"
+          },
+          stats: {
+            activeMembers: 0,
+            trainers: 5,
+            operationalHoursTitle: "Operational Hours",
+            operationalHours: "5AM - 10PM"
+          }
         };
   });
 
@@ -122,8 +156,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return summary;
   };
 
-  const addMember = (member: Member) => {
-    setMembers(prev => [...prev, member]);
+  // Generate a unique admission number (DGM001, DGM002, etc.)
+  const generateAdmissionNumber = (): string => {
+    let highestNum = 0;
+    
+    members.forEach(member => {
+      if (member.admissionNumber.startsWith("DGM")) {
+        const num = parseInt(member.admissionNumber.substring(3));
+        if (!isNaN(num) && num > highestNum) {
+          highestNum = num;
+        }
+      }
+    });
+    
+    return `DGM${String(highestNum + 1).padStart(3, '0')}`;
+  };
+
+  const addMember = (member: Member): string => {
+    const admissionNumber = generateAdmissionNumber();
+    const newMember = { 
+      ...member, 
+      id: uuidv4(), 
+      admissionNumber,
+      registrationDate: new Date().toISOString()
+    };
+    
+    setMembers(prev => [...prev, newMember]);
+    return admissionNumber;
   };
 
   const addDietPlan = (plan: DietPlan) => {
@@ -165,8 +224,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setProfile(prev => ({ ...prev, ...updatedProfile }));
   };
 
+  const updateContactInfo = (contactInfo: ContactInfo) => {
+    setProfile(prev => ({
+      ...prev,
+      contactInfo
+    }));
+  };
+
+  const updateStats = (stats: GymStats) => {
+    setProfile(prev => ({
+      ...prev,
+      stats
+    }));
+  };
+
   const getMemberById = (id: string) => {
     return members.find(member => member.id === id);
+  };
+
+  const getMemberByAdmissionNumber = (admissionNumber: string) => {
+    return members.find(member => member.admissionNumber === admissionNumber);
   };
 
   const getDietPlansByMemberId = (memberId: string) => {
@@ -184,7 +261,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateDietPlan,
         togglePinPlan,
         updateProfile,
+        updateContactInfo,
+        updateStats,
         getMemberById,
+        getMemberByAdmissionNumber,
         getDietPlansByMemberId,
         calculateNutrition,
         deleteDietPlan

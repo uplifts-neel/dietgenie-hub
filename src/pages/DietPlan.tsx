@@ -9,19 +9,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import MealCategorySelector from "@/components/MealCategorySelector";
 import NutritionSummary from "@/components/NutritionSummary";
-import { Check, Share2 } from "lucide-react";
+import { Check, Share2, Search } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "sonner";
 
 const DietPlan = () => {
   const navigate = useNavigate();
-  const { addMember, addDietPlan, calculateNutrition } = useAppContext();
+  const { addDietPlan, calculateNutrition, getMemberByAdmissionNumber } = useAppContext();
   
   const [step, setStep] = useState(1);
   const [admissionNumber, setAdmissionNumber] = useState("");
   const [memberName, setMemberName] = useState("");
   const [weight, setWeight] = useState("");
+  const [memberId, setMemberId] = useState("");
   const [activeTimeSlot, setActiveTimeSlot] = useState<TimeSlot>("Morning");
+  const [searchError, setSearchError] = useState("");
   
   const [meals, setMeals] = useState<Record<TimeSlot, MealItem[]>>({
     Morning: [],
@@ -53,10 +55,31 @@ const DietPlan = () => {
     { value: "Night", label: "Night" }
   ];
 
+  const handleSearchMember = () => {
+    if (!admissionNumber.trim()) {
+      setSearchError("Please enter a member ID");
+      return;
+    }
+
+    const member = getMemberByAdmissionNumber(admissionNumber);
+    if (member) {
+      setMemberName(member.name);
+      setWeight(member.weight || "");
+      setMemberId(member.id);
+      setSearchError("");
+      toast.success(`Found ${member.name}`);
+    } else {
+      setSearchError("Member not found. Please check the ID.");
+      setMemberName("");
+      setWeight("");
+      setMemberId("");
+    }
+  };
+
   const handleNextStep = () => {
     if (step === 1) {
-      if (!admissionNumber || !memberName || !weight) {
-        toast.error("Please fill all fields");
+      if (!admissionNumber || !memberName) {
+        toast.error("Please find a valid member first");
         return;
       }
       setStep(2);
@@ -98,16 +121,7 @@ const DietPlan = () => {
   };
 
   const handleGeneratePlan = () => {
-    const memberId = uuidv4();
     const planId = uuidv4();
-    
-    // Add member
-    addMember({
-      id: memberId,
-      admissionNumber,
-      name: memberName,
-      weight
-    });
     
     // Add diet plan
     addDietPlan({
@@ -148,37 +162,33 @@ const DietPlan = () => {
             <div className="space-y-4">
               <div>
                 <Label htmlFor="admission" className="text-white">Admission Number</Label>
-                <Input
-                  id="admission"
-                  value={admissionNumber}
-                  onChange={(e) => setAdmissionNumber(e.target.value)}
-                  className="bg-white/10 border-white/20 text-white mt-1"
-                  placeholder="Enter admission number"
-                />
+                <div className="flex gap-2 mt-1">
+                  <Input
+                    id="admission"
+                    value={admissionNumber}
+                    onChange={(e) => {
+                      setAdmissionNumber(e.target.value);
+                      setSearchError("");
+                    }}
+                    className="bg-white/10 border-white/20 text-white"
+                    placeholder="Enter member ID"
+                  />
+                  <Button 
+                    onClick={handleSearchMember} 
+                    className="bg-turquoise hover:bg-turquoise/90 text-white"
+                  >
+                    <Search className="h-4 w-4" />
+                  </Button>
+                </div>
+                {searchError && <p className="text-coral-red text-sm mt-1">{searchError}</p>}
               </div>
               
-              <div>
-                <Label htmlFor="name" className="text-white">Full Name</Label>
-                <Input
-                  id="name"
-                  value={memberName}
-                  onChange={(e) => setMemberName(e.target.value)}
-                  className="bg-white/10 border-white/20 text-white mt-1"
-                  placeholder="Enter member name"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="weight" className="text-white">Current Weight (kg)</Label>
-                <Input
-                  id="weight"
-                  type="number"
-                  value={weight}
-                  onChange={(e) => setWeight(e.target.value)}
-                  className="bg-white/10 border-white/20 text-white mt-1"
-                  placeholder="Enter current weight"
-                />
-              </div>
+              {memberName && (
+                <div className="bg-white/5 p-4 rounded-lg">
+                  <p className="text-white font-medium">Member: {memberName}</p>
+                  {weight && <p className="text-white/80 text-sm mt-1">Weight: {weight} kg</p>}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -226,7 +236,7 @@ const DietPlan = () => {
                 <h3 className="text-lg text-white font-medium mb-2">Member Details</h3>
                 <p className="text-white/80">Name: {memberName}</p>
                 <p className="text-white/80">Admission: {admissionNumber}</p>
-                <p className="text-white/80">Weight: {weight} kg</p>
+                {weight && <p className="text-white/80">Weight: {weight} kg</p>}
               </div>
               
               <NutritionSummary nutrition={nutritionSummary} />

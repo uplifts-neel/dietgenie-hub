@@ -1,6 +1,6 @@
 
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
-import { Home, User, Utensils, History } from "lucide-react";
+import { Home, Settings, Utensils, History, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const Layout = () => {
@@ -9,9 +9,10 @@ const Layout = () => {
   
   const navItems = [
     { icon: Home, label: "Home", path: "/home" },
-    { icon: User, label: "Profile", path: "/profile" },
+    { icon: UserPlus, label: "Registration", path: "/registration" },
     { icon: Utensils, label: "Diet Plan", path: "/diet-plan" },
     { icon: History, label: "History", path: "/history" },
+    { icon: Settings, label: "Settings", path: "/settings" },
   ];
 
   return (
