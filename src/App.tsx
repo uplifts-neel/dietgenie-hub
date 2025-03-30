@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,6 +13,7 @@ import Registration from "./pages/Registration";
 import NotFound from "./pages/NotFound";
 import Layout from "./components/Layout";
 import EditDietPlanModal from "./components/EditDietPlanModal";
+import Fees from "./pages/Fees";
 import { App as CapApp } from '@capacitor/app';
 
 const queryClient = new QueryClient({
@@ -25,23 +25,19 @@ const queryClient = new QueryClient({
   },
 });
 
-// Handle Capacitor back button
 const CapacitorBackButton = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
     const handleBackButton = () => {
-      // If on splash screen or home, exit app
       if (location.pathname === '/' || location.pathname === '/home') {
         CapApp.exitApp();
       } else {
-        // Otherwise navigate back
         navigate(-1);
       }
     };
 
-    // Only add this listener if we're running in a Capacitor environment
     if (window.Capacitor && window.Capacitor.isNativePlatform()) {
       CapApp.addListener('backButton', handleBackButton);
       
@@ -57,16 +53,11 @@ const CapacitorBackButton = () => {
 const App = () => {
   const [isCapacitorInitialized, setIsCapacitorInitialized] = useState(false);
 
-  // Apply dark mode by default
   useEffect(() => {
     document.documentElement.classList.add('dark');
-    
-    // Add a class to the body for additional styling
     document.body.classList.add('bg-gradient-to-br', 'from-[#1a1a1a]', 'via-[#232323]', 'to-[#1a1a1a]');
     
-    // Initialize Capacitor if available
     if (window.Capacitor && window.Capacitor.isNativePlatform()) {
-      // Set status bar settings for mobile devices
       if (window.Capacitor.Plugins.StatusBar) {
         window.Capacitor.Plugins.StatusBar.setStyle({ style: 'DARK' });
         window.Capacitor.Plugins.StatusBar.setBackgroundColor({ color: '#1a1a1a' });
@@ -90,10 +81,10 @@ const App = () => {
                 <Route path="/home" element={<Home />} />
                 <Route path="/registration" element={<Registration />} />
                 <Route path="/diet-plan" element={<DietPlan />} />
+                <Route path="/fees" element={<Fees />} />
                 <Route path="/history" element={<History />} />
                 <Route path="/settings" element={<Settings />} />
               </Route>
-              {/* Special route for editing diet plans */}
               <Route path="/diet-plan/edit" element={<EditDietPlanModal />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

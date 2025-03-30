@@ -7,10 +7,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { UserPlus, Check } from "lucide-react";
+import { UserPlus, Check, Calendar } from "lucide-react";
 
 const Registration = () => {
-  const { addMember } = useAppContext();
+  const { addMember, addFee } = useAppContext();
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -18,6 +18,9 @@ const Registration = () => {
     dateOfBirth: "",
     feeType: "Monthly",
     admissionType: "Non-PT",
+    feeAmount: 500,
+    feeStartDate: new Date().toISOString().slice(0, 10),
+    feeEndDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().slice(0, 10),
   });
   const [submitting, setSubmitting] = useState(false);
   const [admissionNumber, setAdmissionNumber] = useState<string | null>(null);
@@ -29,6 +32,32 @@ const Registration = () => {
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Update fee end date based on fee type
+    if (name === "feeType") {
+      const startDate = new Date(formData.feeStartDate);
+      let endDate = new Date(startDate);
+      
+      switch (value) {
+        case "Monthly":
+          endDate.setMonth(startDate.getMonth() + 1);
+          break;
+        case "Quarterly":
+          endDate.setMonth(startDate.getMonth() + 3);
+          break;
+        case "Half-Year":
+          endDate.setMonth(startDate.getMonth() + 6);
+          break;
+        case "Full-Year":
+          endDate.setFullYear(startDate.getFullYear() + 1);
+          break;
+      }
+      
+      setFormData(prev => ({ 
+        ...prev, 
+        feeEndDate: endDate.toISOString().slice(0, 10) 
+      }));
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -55,6 +84,19 @@ const Registration = () => {
         admissionType: formData.admissionType,
       });
 
+      // Add fee record
+      addFee({
+        memberId: "", // Will be updated below with the correct memberId
+        memberName: formData.name,
+        admissionNumber: newAdmissionNumber,
+        amount: Number(formData.feeAmount),
+        paymentDate: new Date().toISOString(),
+        startDate: formData.feeStartDate,
+        endDate: formData.feeEndDate,
+        feeType: formData.feeType,
+        status: "Paid"
+      });
+
       setAdmissionNumber(newAdmissionNumber);
       
       // Reset form data
@@ -65,6 +107,9 @@ const Registration = () => {
         dateOfBirth: "",
         feeType: "Monthly",
         admissionType: "Non-PT",
+        feeAmount: 500,
+        feeStartDate: new Date().toISOString().slice(0, 10),
+        feeEndDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().slice(0, 10),
       });
 
       toast.success("Registration successful!");
@@ -84,6 +129,9 @@ const Registration = () => {
       dateOfBirth: "",
       feeType: "Monthly",
       admissionType: "Non-PT",
+      feeAmount: 500,
+      feeStartDate: new Date().toISOString().slice(0, 10),
+      feeEndDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().slice(0, 10),
     });
     setAdmissionNumber(null);
   };
@@ -175,24 +223,6 @@ const Registration = () => {
               </div>
               
               <div>
-                <Label htmlFor="feeType" className="text-white">Fee Type *</Label>
-                <Select
-                  value={formData.feeType}
-                  onValueChange={(value) => handleSelectChange("feeType", value)}
-                >
-                  <SelectTrigger className="bg-white/10 border-white/20 text-white mt-1">
-                    <SelectValue placeholder="Select fee type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Monthly">Monthly</SelectItem>
-                    <SelectItem value="Quarterly">Quarterly</SelectItem>
-                    <SelectItem value="Half-Year">Half-Year</SelectItem>
-                    <SelectItem value="Full-Year">Full-Year</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
                 <Label htmlFor="admissionType" className="text-white">Admission Type *</Label>
                 <Select
                   value={formData.admissionType}
@@ -206,6 +236,75 @@ const Registration = () => {
                     <SelectItem value="PT">PT</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              
+              {/* Fees Section */}
+              <div className="border-t border-white/10 pt-4 mt-4">
+                <h3 className="text-lg font-semibold text-white mb-3">Fees Details</h3>
+                
+                <div>
+                  <Label htmlFor="feeType" className="text-white">Fee Type *</Label>
+                  <Select
+                    value={formData.feeType}
+                    onValueChange={(value) => handleSelectChange("feeType", value)}
+                  >
+                    <SelectTrigger className="bg-white/10 border-white/20 text-white mt-1">
+                      <SelectValue placeholder="Select fee type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Monthly">Monthly</SelectItem>
+                      <SelectItem value="Quarterly">Quarterly</SelectItem>
+                      <SelectItem value="Half-Year">Half-Year</SelectItem>
+                      <SelectItem value="Full-Year">Full-Year</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="mt-3">
+                  <Label htmlFor="feeAmount" className="text-white">Fee Amount (₹) *</Label>
+                  <Input
+                    id="feeAmount"
+                    name="feeAmount"
+                    type="number"
+                    value={formData.feeAmount}
+                    onChange={handleInputChange}
+                    className="bg-white/10 border-white/20 text-white mt-1"
+                    required
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3 mt-3">
+                  <div>
+                    <Label htmlFor="feeStartDate" className="text-white">Start Date *</Label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                      <Input
+                        id="feeStartDate"
+                        name="feeStartDate"
+                        type="date"
+                        value={formData.feeStartDate}
+                        onChange={handleInputChange}
+                        className="bg-white/10 border-white/20 text-white mt-1 pl-10"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="feeEndDate" className="text-white">End Date *</Label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                      <Input
+                        id="feeEndDate"
+                        name="feeEndDate"
+                        type="date"
+                        value={formData.feeEndDate}
+                        onChange={handleInputChange}
+                        className="bg-white/10 border-white/20 text-white mt-1 pl-10"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
               
               <Button 

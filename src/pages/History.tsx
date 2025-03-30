@@ -1,22 +1,26 @@
 
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAppContext, DietPlan } from "@/context/AppContext";
+import { useAppContext, DietPlan, Fee } from "@/context/AppContext";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Search, Share2, Download, Send, Pin, PinOff, Edit, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTabs, DialogTab } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Search, Share2, Download, Send, Pin, PinOff, Edit, Trash2, CreditCard, FileText } from "lucide-react";
 import { toast } from "sonner";
 import NutritionSummary from "@/components/NutritionSummary";
 
 const History = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { dietPlans, togglePinPlan, deleteDietPlan } = useAppContext();
+  const { dietPlans, togglePinPlan, deleteDietPlan, fees, getFeesByMemberId } = useAppContext();
   const [search, setSearch] = useState("");
   const [selectedPlan, setSelectedPlan] = useState<DietPlan | null>(null);
+  const [selectedMemberFees, setSelectedMemberFees] = useState<Fee[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("diet-plan");
+  const [isSearchByAdmissionNumber, setIsSearchByAdmissionNumber] = useState(false);
 
   // Parse URL query parameters
   useEffect(() => {
@@ -27,10 +31,12 @@ const History = () => {
       const plan = dietPlans.find(p => p.id === planId);
       if (plan) {
         setSelectedPlan(plan);
+        setSelectedMemberFees(getFeesByMemberId(plan.memberId));
         setIsDialogOpen(true);
+        setActiveTab("diet-plan");
       }
     }
-  }, [location.search, dietPlans]);
+  }, [location.search, dietPlans, getFeesByMemberId]);
 
   // Sort plans: pinned plans first, then by date (newest first)
   const sortedPlans = [...dietPlans].sort((a, b) => {
@@ -40,15 +46,20 @@ const History = () => {
     return a.isPinned ? -1 : 1;
   });
 
-  const filteredPlans = sortedPlans.filter(
-    (plan) =>
-      plan.memberName.toLowerCase().includes(search.toLowerCase()) ||
-      plan.admissionNumber.includes(search)
-  );
+  const filteredPlans = sortedPlans.filter((plan) => {
+    if (isSearchByAdmissionNumber) {
+      return plan.admissionNumber.includes(search);
+    } else {
+      return plan.memberName.toLowerCase().includes(search.toLowerCase()) || 
+             plan.admissionNumber.includes(search);
+    }
+  });
 
   const handleOpenPlan = (plan: DietPlan) => {
     setSelectedPlan(plan);
+    setSelectedMemberFees(getFeesByMemberId(plan.memberId));
     setIsDialogOpen(true);
+    setActiveTab("diet-plan");
   };
 
   const handleTogglePin = (e: React.MouseEvent, planId: string) => {
@@ -99,18 +110,31 @@ const History = () => {
     toast.success("WhatsApp share functionality would be implemented here");
   };
 
+  const toggleSearchMode = () => {
+    setIsSearchByAdmissionNumber(!isSearchByAdmissionNumber);
+    setSearch("");
+  };
+
   return (
     <div className="min-h-screen p-6 pb-20">
-      <h1 className="text-2xl font-bold text-white mb-6">Diet Plan History</h1>
+      <h1 className="text-2xl font-bold text-white mb-6">History</h1>
       
       <div className="relative mb-6">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
         <Input
-          placeholder="Search by name or admission number"
+          placeholder={isSearchByAdmissionNumber ? "Search by admission number" : "Search by name or admission number"}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="bg-white/5 border-white/10 pl-10 text-white placeholder:text-gray-400"
         />
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+          onClick={toggleSearchMode}
+        >
+          {isSearchByAdmissionNumber ? "Search by Name" : "Search by ID"}
+        </Button>
       </div>
 
       {filteredPlans.length === 0 ? (
@@ -214,83 +238,141 @@ const History = () => {
         </div>
       )}
 
-      {/* Diet Plan Details Dialog */}
+      {/* Details Dialog with Tabs */}
       {selectedPlan && (
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="glass-card border-none max-w-md mx-auto">
             <DialogHeader>
-              <DialogTitle className="text-white text-center">Diet Plan Details</DialogTitle>
+              <DialogTitle className="text-white text-center">Member Details</DialogTitle>
             </DialogHeader>
             
             <div className="bg-white/5 p-4 rounded-lg mb-4">
-              <h3 className="text-lg text-white font-medium mb-2">Member Details</h3>
+              <h3 className="text-lg text-white font-medium mb-2">Member Information</h3>
               <p className="text-white/80">Name: {selectedPlan.memberName}</p>
               <p className="text-white/80">Admission: {selectedPlan.admissionNumber}</p>
-              <p className="text-white/80">Weight: {selectedPlan.weight} kg</p>
-              <p className="text-white/80">
-                Date: {new Date(selectedPlan.date).toLocaleDateString()}
-              </p>
+              {selectedPlan.weight && <p className="text-white/80">Weight: {selectedPlan.weight} kg</p>}
             </div>
             
-            {/* Nutrition summary */}
-            {selectedPlan.nutrition && (
-              <NutritionSummary nutrition={selectedPlan.nutrition} className="mb-4" />
-            )}
-            
-            <div className="bg-white/5 p-4 rounded-lg space-y-4 max-h-60 overflow-y-auto">
-              <h3 className="text-lg text-white font-medium mb-2">Diet Plan</h3>
+            <Tabs defaultValue="diet-plan" value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid grid-cols-2 mb-4">
+                <TabsTrigger value="diet-plan" className="flex items-center">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Diet Plan
+                </TabsTrigger>
+                <TabsTrigger value="fees" className="flex items-center">
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  Fees History
+                </TabsTrigger>
+              </TabsList>
               
-              {timeSlots.map((slot) => (
-                <div key={slot.value} className="border-b border-white/10 pb-3 last:border-none">
-                  <h4 className="text-white font-medium mb-2">{slot.label}</h4>
-                  {selectedPlan.meals[slot.value as keyof typeof selectedPlan.meals].length === 0 ? (
-                    <p className="text-gray-400 text-sm">No meals selected</p>
+              <TabsContent value="diet-plan" className="space-y-4">
+                {selectedPlan.nutrition && (
+                  <NutritionSummary nutrition={selectedPlan.nutrition} className="mb-4" />
+                )}
+                
+                <div className="bg-white/5 p-4 rounded-lg space-y-4 max-h-60 overflow-y-auto">
+                  <h3 className="text-lg text-white font-medium mb-2">Diet Details</h3>
+                  <p className="text-white/80">
+                    Date: {new Date(selectedPlan.date).toLocaleDateString()}
+                  </p>
+                  
+                  {timeSlots.map((slot) => (
+                    <div key={slot.value} className="border-b border-white/10 pb-3 last:border-none">
+                      <h4 className="text-white font-medium mb-2">{slot.label}</h4>
+                      {selectedPlan.meals[slot.value as keyof typeof selectedPlan.meals].length === 0 ? (
+                        <p className="text-gray-400 text-sm">No meals selected</p>
+                      ) : (
+                        <div className="space-y-1">
+                          {selectedPlan.meals[slot.value as keyof typeof selectedPlan.meals].map((meal, index) => (
+                            <p key={index} className="text-white/80">
+                              • {meal.name} ({meal.quantity})
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="flex justify-between gap-2">
+                  <Button
+                    onClick={handleWhatsapp}
+                    className="bg-green-600 hover:bg-green-700 text-white flex-1"
+                  >
+                    <Send className="mr-2 h-4 w-4" />
+                    WhatsApp
+                  </Button>
+                  <Button
+                    onClick={handleDownload}
+                    className="bg-turquoise hover:bg-turquoise/90 text-white flex-1"
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Save
+                  </Button>
+                  <Button
+                    onClick={handleShare}
+                    className="bg-coral-red hover:bg-coral-red/90 text-white flex-1"
+                  >
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Share
+                  </Button>
+                </div>
+                
+                <Button
+                  onClick={(e) => handleEditPlan(e, selectedPlan)}
+                  className="w-full bg-white/10 hover:bg-white/20 text-white"
+                >
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit Plan
+                </Button>
+              </TabsContent>
+              
+              <TabsContent value="fees" className="space-y-4">
+                <div className="bg-white/5 p-4 rounded-lg max-h-80 overflow-y-auto">
+                  <h3 className="text-lg text-white font-medium mb-4">Fees History</h3>
+                  
+                  {selectedMemberFees.length === 0 ? (
+                    <p className="text-gray-400 text-sm text-center py-4">No fees records found</p>
                   ) : (
-                    <div className="space-y-1">
-                      {selectedPlan.meals[slot.value as keyof typeof selectedPlan.meals].map((meal, index) => (
-                        <p key={index} className="text-white/80">
-                          • {meal.name} ({meal.quantity})
-                        </p>
+                    <div className="space-y-3">
+                      {selectedMemberFees.map((fee) => (
+                        <div key={fee.id} className="bg-white/5 p-3 rounded-lg">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <span className={`px-2 py-1 text-xs rounded-full ${
+                                fee.status === 'Paid' ? 'bg-green-500/20 text-green-400' :
+                                fee.status === 'Due' ? 'bg-yellow-500/20 text-yellow-400' :
+                                'bg-red-500/20 text-red-400'
+                              }`}>
+                                {fee.status}
+                              </span>
+                              <p className="text-white mt-1">₹{fee.amount} - {fee.feeType}</p>
+                              <p className="text-gray-400 text-xs mt-1">
+                                Payment: {new Date(fee.paymentDate).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-white/80 text-sm">Period:</p>
+                              <p className="text-gray-400 text-xs">
+                                {new Date(fee.startDate).toLocaleDateString()} to {new Date(fee.endDate).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
                       ))}
                     </div>
                   )}
                 </div>
-              ))}
-            </div>
-            
-            <div className="flex justify-between mt-4 gap-2">
-              <Button
-                onClick={handleWhatsapp}
-                className="bg-green-600 hover:bg-green-700 text-white flex-1"
-              >
-                <Send className="mr-2 h-4 w-4" />
-                WhatsApp
-              </Button>
-              <Button
-                onClick={handleDownload}
-                className="bg-turquoise hover:bg-turquoise/90 text-white flex-1"
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Save
-              </Button>
-              <Button
-                onClick={handleShare}
-                className="bg-coral-red hover:bg-coral-red/90 text-white flex-1"
-              >
-                <Share2 className="mr-2 h-4 w-4" />
-                Share
-              </Button>
-            </div>
-            
-            <div className="flex justify-between mt-2">
-              <Button
-                onClick={(e) => handleEditPlan(e, selectedPlan)}
-                className="w-full bg-white/10 hover:bg-white/20 text-white"
-              >
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Plan
-              </Button>
-            </div>
+                
+                <Button
+                  onClick={() => navigate("/fees")}
+                  className="w-full bg-white/10 hover:bg-white/20 text-white"
+                >
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  View All Fees
+                </Button>
+              </TabsContent>
+            </Tabs>
           </DialogContent>
         </Dialog>
       )}

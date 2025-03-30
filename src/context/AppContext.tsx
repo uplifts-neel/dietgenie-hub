@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { getMealById } from "@/data/mealOptions";
 import { v4 as uuidv4 } from "uuid";
@@ -64,10 +63,25 @@ export type Profile = {
   stats?: GymStats;
 };
 
+export type Fee = {
+  id: string;
+  memberId: string;
+  memberName: string;
+  admissionNumber: string;
+  amount: number;
+  paymentDate: string;
+  startDate: string;
+  endDate: string;
+  feeType: string; // Monthly, Quarterly, Half-Year, Full-Year
+  status: "Paid" | "Due" | "Overdue";
+  createdAt: string;
+};
+
 // Define context type
 type AppContextType = {
   members: Member[];
   dietPlans: DietPlan[];
+  fees: Fee[];
   profile: Profile;
   addMember: (member: Member) => string;
   addDietPlan: (plan: DietPlan) => void;
@@ -81,6 +95,10 @@ type AppContextType = {
   getDietPlansByMemberId: (memberId: string) => DietPlan[];
   calculateNutrition: (meals: Record<TimeSlot, MealItem[]>) => NutritionSummary;
   deleteDietPlan: (planId: string) => void;
+  addFee: (fee: Omit<Fee, "id" | "createdAt">) => void;
+  updateFeeStatus: (feeId: string, status: Fee["status"]) => void;
+  getDueFees: () => Fee[];
+  getFeesByMemberId: (memberId: string) => Fee[];
 };
 
 // Create context
@@ -96,6 +114,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [dietPlans, setDietPlans] = useState<DietPlan[]>(() => {
     const savedPlans = localStorage.getItem("dietPlans");
     return savedPlans ? JSON.parse(savedPlans) : [];
+  });
+
+  const [fees, setFees] = useState<Fee[]>(() => {
+    const savedFees = localStorage.getItem("fees");
+    return savedFees ? JSON.parse(savedFees) : [];
   });
 
   const [profile, setProfile] = useState<Profile>(() => {
@@ -129,6 +152,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [dietPlans]);
 
   useEffect(() => {
+    localStorage.setItem("fees", JSON.stringify(fees));
+  }, [fees]);
+
+  useEffect(() => {
     localStorage.setItem("profile", JSON.stringify(profile));
   }, [profile]);
 
@@ -156,7 +183,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return summary;
   };
 
-  // Generate a unique admission number (DGM001, DGM002, etc.)
   const generateAdmissionNumber = (): string => {
     let highestNum = 0;
     
@@ -186,7 +212,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addDietPlan = (plan: DietPlan) => {
-    // Calculate and add nutrition data
     const nutrition = calculateNutrition(plan.meals);
     const updatedPlan = {
       ...plan,
@@ -197,7 +222,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateDietPlan = (plan: DietPlan) => {
-    // Calculate nutrition
     const nutrition = calculateNutrition(plan.meals);
     const updatedPlan = {
       ...plan,
@@ -250,11 +274,40 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return dietPlans.filter(plan => plan.memberId === memberId);
   };
 
+  const addFee = (feeData: Omit<Fee, "id" | "createdAt">) => {
+    const newFee: Fee = {
+      ...feeData,
+      id: uuidv4(),
+      createdAt: new Date().toISOString(),
+    };
+    setFees(prev => [...prev, newFee]);
+  };
+
+  const updateFeeStatus = (feeId: string, status: Fee["status"]) => {
+    setFees(prev => prev.map(fee => 
+      fee.id === feeId ? { ...fee, status } : fee
+    ));
+  };
+
+  const getDueFees = () => {
+    const today = new Date();
+    return fees.filter(fee => {
+      if (fee.status === "Paid") return false;
+      const endDate = new Date(fee.endDate);
+      return endDate < today;
+    });
+  };
+
+  const getFeesByMemberId = (memberId: string) => {
+    return fees.filter(fee => fee.memberId === memberId);
+  };
+
   return (
     <AppContext.Provider 
       value={{ 
         members, 
-        dietPlans, 
+        dietPlans,
+        fees,
         profile,
         addMember, 
         addDietPlan, 
@@ -267,7 +320,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         getMemberByAdmissionNumber,
         getDietPlansByMemberId,
         calculateNutrition,
-        deleteDietPlan
+        deleteDietPlan,
+        addFee,
+        updateFeeStatus,
+        getDueFees,
+        getFeesByMemberId
       }}
     >
       {children}
@@ -275,7 +332,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
 };
 
-// Custom hook to use the context
 export const useAppContext = () => {
   const context = useContext(AppContext);
   if (context === undefined) {

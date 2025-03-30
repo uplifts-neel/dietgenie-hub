@@ -1,6 +1,6 @@
 
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
-import { Home, Settings, Utensils, History, UserPlus } from "lucide-react";
+import { Home, Settings, Utensils, History, UserPlus, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const Layout = () => {
@@ -11,6 +11,7 @@ const Layout = () => {
     { icon: Home, label: "Home", path: "/home" },
     { icon: UserPlus, label: "Registration", path: "/registration" },
     { icon: Utensils, label: "Diet Plan", path: "/diet-plan" },
+    { icon: CreditCard, label: "Fees", path: "/fees" },
     { icon: History, label: "History", path: "/history" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
