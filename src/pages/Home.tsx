@@ -1,3 +1,4 @@
+
 import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -79,113 +80,73 @@ const Home = () => {
       </div>
 
       {/* Notifications Section */}
-      {(dueFees.length > 0 || recentDietPlans.length > 0) && (
-        <div className="mt-8 px-6">
-          <Card className="glass-card overflow-hidden animate-fade-in border-none">
-            <CardContent className="p-4">
-              <h3 className="text-lg font-semibold text-white mb-3">Notifications</h3>
-              
-              {dueFees.length > 0 && (
-                <div className="mb-4">
-                  <h4 className="text-white font-medium flex items-center mb-2">
-                    <AlertTriangle className="h-4 w-4 text-yellow-400 mr-2" />
-                    Due Fees
-                  </h4>
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {dueFees.map((fee) => (
-                      <div 
-                        key={fee.id}
-                        className="bg-white/5 p-2 rounded-md flex justify-between items-center cursor-pointer hover:bg-white/10 transition-colors"
-                        onClick={() => navigate("/fees")}
-                      >
-                        <div>
-                          <p className="text-white text-sm">{fee.memberName}</p>
-                          <p className="text-xs text-gray-400">₹{fee.amount} • {fee.feeType}</p>
-                        </div>
-                        <span className={`px-2 py-1 rounded-full text-xs ${fee.status === 'Overdue' ? 'bg-red-500/20 text-red-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
-                          {fee.status}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    className="w-full mt-2 text-white/80 hover:text-white bg-white/5"
-                    onClick={() => navigate("/fees")}
-                  >
-                    View All Fees
-                  </Button>
-                </div>
-              )}
-              
-              {recentDietPlans.length > 0 && (
-                <div>
-                  <h4 className="text-white font-medium flex items-center mb-2">
-                    <FileText className="h-4 w-4 text-turquoise mr-2" />
-                    Recent Diet Plans
-                  </h4>
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {recentDietPlans.map((plan) => (
-                      <div 
-                        key={plan.id}
-                        className="bg-white/5 p-2 rounded-md cursor-pointer hover:bg-white/10 transition-colors"
-                        onClick={() => navigate(`/history?plan=${plan.id}`)}
-                      >
-                        <p className="text-white text-sm">{plan.memberName}</p>
-                        <p className="text-xs text-gray-400">
-                          {new Date(plan.date).toLocaleDateString()} • #{plan.admissionNumber}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    className="w-full mt-2 text-white/80 hover:text-white bg-white/5"
-                    onClick={() => navigate("/history")}
-                  >
-                    View All Diet Plans
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Contact & Social Media Section */}
       <div className="mt-8 px-6">
         <Card className="glass-card overflow-hidden animate-fade-in border-none">
           <CardContent className="p-4">
-            <h3 className="text-lg font-semibold text-white mb-3">Connect With Us</h3>
-            <div className="flex flex-col space-y-3">
-              <a 
-                href={`tel:${profile.contactInfo?.phone || "+919999999999"}`} 
-                className="flex items-center p-2 rounded-lg bg-gradient-to-r from-coral-red/20 to-coral-red/5 hover:from-coral-red/30 hover:to-coral-red/10 transition-all"
-              >
-                <div className="p-2 rounded-full bg-coral-red/30 mr-3">
-                  <Phone className="h-5 w-5 text-white" />
+            <h3 className="text-lg font-semibold text-white mb-3">Notifications</h3>
+            
+            {dueFees.length > 0 && (
+              <div className="mb-4">
+                <h4 className="text-white font-medium flex items-center mb-2">
+                  <AlertTriangle className="h-4 w-4 text-yellow-400 mr-2" />
+                  Due Fees
+                </h4>
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {dueFees.map((fee) => (
+                    <div 
+                      key={fee.id}
+                      className="bg-white/5 p-2 rounded-md flex justify-between items-center cursor-pointer hover:bg-white/10 transition-colors"
+                      onClick={() => navigate("/fees")}
+                    >
+                      <div>
+                        <p className="text-white text-sm">{fee.memberName}</p>
+                        <p className="text-xs text-gray-400">₹{fee.amount} • {fee.feeType}</p>
+                      </div>
+                      <span className={`px-2 py-1 rounded-full text-xs ${fee.status === 'Overdue' ? 'bg-red-500/20 text-red-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
+                        {fee.status}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-                <div>
-                  <p className="text-white text-sm">Phone</p>
-                  <p className="text-white font-medium">{profile.contactInfo?.phone || "+91 9999999999"}</p>
+                <Button 
+                  variant="outline" 
+                  className="w-full mt-2 text-white/80 hover:text-white bg-white/5"
+                  onClick={() => navigate("/fees")}
+                >
+                  View All Fees
+                </Button>
+              </div>
+            )}
+            
+            {recentDietPlans.length > 0 && (
+              <div>
+                <h4 className="text-white font-medium flex items-center mb-2">
+                  <FileText className="h-4 w-4 text-turquoise mr-2" />
+                  Recent Diet Plans
+                </h4>
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {recentDietPlans.map((plan) => (
+                    <div 
+                      key={plan.id}
+                      className="bg-white/5 p-2 rounded-md cursor-pointer hover:bg-white/10 transition-colors"
+                      onClick={() => navigate(`/history?plan=${plan.id}`)}
+                    >
+                      <p className="text-white text-sm">{plan.memberName}</p>
+                      <p className="text-xs text-gray-400">
+                        {new Date(plan.date).toLocaleDateString()} • #{plan.admissionNumber}
+                      </p>
+                    </div>
+                  ))}
                 </div>
-              </a>
-              
-              <a 
-                href={`https://instagram.com/${profile.contactInfo?.instagram?.replace('@', '') || "dronacharya_gym"}`}
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="flex items-center p-2 rounded-lg bg-gradient-to-r from-turquoise/20 to-turquoise/5 hover:from-turquoise/30 hover:to-turquoise/10 transition-all"
-              >
-                <div className="p-2 rounded-full bg-turquoise/30 mr-3">
-                  <Instagram className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-white text-sm">Instagram</p>
-                  <p className="text-white font-medium">{profile.contactInfo?.instagram || "@dronacharya_gym"}</p>
-                </div>
-              </a>
-            </div>
+                <Button 
+                  variant="outline" 
+                  className="w-full mt-2 text-white/80 hover:text-white bg-white/5"
+                  onClick={() => navigate("/history")}
+                >
+                  View All Diet Plans
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -232,38 +193,39 @@ const Home = () => {
         ))}
       </div>
 
-      {/* Contact Us Section */}
+      {/* Connect With Us Section - Moved to the bottom */}
       <div className="mt-8 px-6">
-        <Card className="glass-card border-none animate-fade-in">
-          <CardContent className="p-6">
-            <h3 className="text-xl font-semibold text-white mb-4">Contact Us</h3>
-            <div className="space-y-4">
-              <p className="text-white/80">
-                Have questions about our gym services or membership plans? Reach out to us directly!
-              </p>
+        <Card className="glass-card overflow-hidden animate-fade-in border-none">
+          <CardContent className="p-4">
+            <h3 className="text-lg font-semibold text-white mb-3">Connect With Us</h3>
+            <div className="flex flex-col space-y-3">
+              <a 
+                href={`tel:${profile.contactInfo?.phone || "+919999999999"}`} 
+                className="flex items-center p-2 rounded-lg bg-gradient-to-r from-coral-red/20 to-coral-red/5 hover:from-coral-red/30 hover:to-coral-red/10 transition-all"
+              >
+                <div className="p-2 rounded-full bg-coral-red/30 mr-3">
+                  <Phone className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-white text-sm">Phone</p>
+                  <p className="text-white font-medium">{profile.contactInfo?.phone || "+91 9999999999"}</p>
+                </div>
+              </a>
               
-              <div className="flex flex-col md:flex-row gap-4">
-                <Button 
-                  onClick={() => window.location.href = `tel:${profile.contactInfo?.phone || "+919999999999"}`} 
-                  className="flex-1 bg-coral-red hover:bg-coral-red/90"
-                >
-                  <Phone className="mr-2 h-5 w-5" />
-                  Call Us
-                </Button>
-                
-                <Button 
-                  onClick={() => window.open(`https://instagram.com/${profile.contactInfo?.instagram?.replace('@', '') || "dronacharya_gym"}`, '_blank')} 
-                  className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90"
-                >
-                  <Instagram className="mr-2 h-5 w-5" />
-                  DM on Instagram
-                </Button>
-              </div>
-              
-              <div className="text-center text-white/60 text-sm mt-4">
-                <p>Dronacharya The Gym</p>
-                <p>Sant Nagar, Burari, Delhi-110036</p>
-              </div>
+              <a 
+                href={`https://instagram.com/${profile.contactInfo?.instagram?.replace('@', '') || "dronacharya_gym"}`}
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="flex items-center p-2 rounded-lg bg-gradient-to-r from-turquoise/20 to-turquoise/5 hover:from-turquoise/30 hover:to-turquoise/10 transition-all"
+              >
+                <div className="p-2 rounded-full bg-turquoise/30 mr-3">
+                  <Instagram className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-white text-sm">Instagram</p>
+                  <p className="text-white font-medium">{profile.contactInfo?.instagram || "@dronacharya_gym"}</p>
+                </div>
+              </a>
             </div>
           </CardContent>
         </Card>

@@ -5,6 +5,8 @@ import { useAppContext, DietPlan, TimeSlot, MealItem } from "@/context/AppContex
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import MealCategorySelector from "@/components/MealCategorySelector";
 import NutritionSummary from "@/components/NutritionSummary";
 import { Check, ArrowLeft } from "lucide-react";
@@ -13,7 +15,7 @@ import { toast } from "sonner";
 const EditDietPlan = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { dietPlans, updateDietPlan, calculateNutrition } = useAppContext();
+  const { dietPlans, updateDietPlan, calculateNutrition, members, getMemberByAdmissionNumber } = useAppContext();
   
   const [plan, setPlan] = useState<DietPlan | null>(null);
   const [activeTimeSlot, setActiveTimeSlot] = useState<TimeSlot>("Morning");
@@ -30,6 +32,9 @@ const EditDietPlan = () => {
     carbs: 0,
     fats: 0
   });
+  const [memberName, setMemberName] = useState("");
+  const [admissionNumber, setAdmissionNumber] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
 
   // Get the plan ID from URL parameters
   useEffect(() => {
@@ -40,6 +45,8 @@ const EditDietPlan = () => {
       const foundPlan = dietPlans.find(p => p.id === planId);
       if (foundPlan) {
         setPlan(foundPlan);
+        setMemberName(foundPlan.memberName);
+        setAdmissionNumber(foundPlan.admissionNumber);
         // Deep clone the meals object to avoid reference issues
         setMeals(JSON.parse(JSON.stringify(foundPlan.meals)));
       } else {
@@ -82,6 +89,21 @@ const EditDietPlan = () => {
     });
   };
 
+  const validateAdmissionNumber = () => {
+    if (!admissionNumber.trim()) {
+      toast.error("Admission number cannot be empty");
+      return false;
+    }
+    
+    const member = getMemberByAdmissionNumber(admissionNumber);
+    if (!member && !isEditing) {
+      toast.error("Member with this admission number does not exist");
+      return false;
+    }
+    
+    return true;
+  };
+
   const handleSavePlan = () => {
     if (!plan) return;
     
@@ -94,10 +116,21 @@ const EditDietPlan = () => {
       toast.error("Please add at least one meal");
       return;
     }
+
+    if (!memberName.trim()) {
+      toast.error("Member name cannot be empty");
+      return;
+    }
+
+    if (!validateAdmissionNumber()) {
+      return;
+    }
     
-    // Update diet plan
+    // Update diet plan with new member details
     updateDietPlan({
       ...plan,
+      memberName: memberName,
+      admissionNumber: admissionNumber,
       meals
     });
     
@@ -122,12 +155,29 @@ const EditDietPlan = () => {
       
       <Card className="glass-card border-none animate-fade-in mb-4">
         <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
+          <div className="space-y-4">
             <div>
-              <h2 className="text-lg font-semibold text-white">{plan.memberName}</h2>
-              <p className="text-sm text-gray-400">Admission #{plan.admissionNumber}</p>
+              <Label htmlFor="memberName" className="text-white">Member Name</Label>
+              <Input
+                id="memberName"
+                value={memberName}
+                onChange={(e) => setMemberName(e.target.value)}
+                className="bg-white/10 border-white/20 text-white mt-1"
+              />
             </div>
-            <div className="mt-2 sm:mt-0">
+            <div>
+              <Label htmlFor="admissionNumber" className="text-white">Admission Number</Label>
+              <Input
+                id="admissionNumber"
+                value={admissionNumber}
+                onChange={(e) => {
+                  setAdmissionNumber(e.target.value);
+                  setIsEditing(true);
+                }}
+                className="bg-white/10 border-white/20 text-white mt-1"
+              />
+            </div>
+            <div>
               <p className="text-sm text-gray-400">
                 Weight: {plan.weight} kg • {new Date(plan.date).toLocaleDateString()}
               </p>

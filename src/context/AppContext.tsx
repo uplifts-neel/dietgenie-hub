@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { getMealById } from "@/data/mealOptions";
 import { v4 as uuidv4 } from "uuid";
@@ -187,15 +188,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     let highestNum = 0;
     
     members.forEach(member => {
-      if (member.admissionNumber.startsWith("DGM")) {
-        const num = parseInt(member.admissionNumber.substring(3));
-        if (!isNaN(num) && num > highestNum) {
-          highestNum = num;
-        }
+      // Change to look for purely numeric admission numbers
+      const num = parseInt(member.admissionNumber);
+      if (!isNaN(num) && num > highestNum) {
+        highestNum = num;
       }
     });
     
-    return `DGM${String(highestNum + 1).padStart(3, '0')}`;
+    // Format with leading zeros (e.g., 0001)
+    return String(highestNum + 1).padStart(4, '0');
   };
 
   const addMember = (member: Member): string => {
