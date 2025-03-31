@@ -130,6 +130,21 @@ export type Database = {
         }
         Relationships: []
       }
+      id: {
+        Row: {
+          created_at: string
+          id: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+        }
+        Relationships: []
+      }
       trainer_accounts: {
         Row: {
           created_at: string | null
