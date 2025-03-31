@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAppContext, DietPlan, Fee } from "@/context/AppContext";
@@ -19,7 +18,6 @@ const History = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSearchByAdmissionNumber, setIsSearchByAdmissionNumber] = useState(false);
 
-  // Parse URL query parameters
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const planId = params.get("plan");
@@ -34,7 +32,6 @@ const History = () => {
     }
   }, [location.search, dietPlans, getFeesByMemberId]);
 
-  // Sort plans: pinned plans first, then by date (newest first)
   const sortedPlans = [...dietPlans].sort((a, b) => {
     if ((a.isPinned && b.isPinned) || (!a.isPinned && !b.isPinned)) {
       return new Date(b.date).getTime() - new Date(a.date).getTime();
@@ -74,7 +71,6 @@ const History = () => {
       deleteDietPlan(planId);
       toast.success("Diet plan deleted");
       
-      // Close dialog if the deleted plan is currently open
       if (selectedPlan && selectedPlan.id === planId) {
         setIsDialogOpen(false);
       }
@@ -82,17 +78,14 @@ const History = () => {
   };
 
   const handleShare = () => {
-    // In a real app, this would use the Web Share API or a similar mechanism
     toast.success("Sharing functionality would be implemented here");
   };
 
   const handleDownload = () => {
-    // In a real app, this would generate a PDF or image
     toast.success("Download functionality would be implemented here");
   };
 
   const handleWhatsapp = () => {
-    // In a real app, this would generate a shareable WhatsApp link
     toast.success("WhatsApp share functionality would be implemented here");
   };
 
@@ -142,7 +135,6 @@ const History = () => {
         </div>
       )}
 
-      {/* Details Dialog with Tabs */}
       {selectedPlan && (
         <PlanDetailsDialog
           plan={selectedPlan}

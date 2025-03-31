@@ -1,106 +1,43 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { getMealById } from "@/data/mealOptions";
 import { v4 as uuidv4 } from "uuid";
 
-// Define types
-export type Member = {
-  id: string;
-  admissionNumber: string;
-  name: string;
-  weight?: string;
-  phone?: string;
-  address?: string;
-  dateOfBirth?: string;
-  feeType?: string;
-  admissionType?: string;
-  registrationDate?: string;
-};
+// Import types
+import { 
+  AppContextType, 
+  Member, 
+  DietPlan, 
+  Fee, 
+  Profile, 
+  ContactInfo, 
+  GymStats, 
+  TimeSlot, 
+  MealItem, 
+  NutritionSummary
+} from "./types";
 
-export type MealItem = {
-  name: string;
-  category: string;
-  quantity: string;
-  mealId?: string; // Reference to the original meal
-};
+// Import services
+import { 
+  createMember, 
+  findMemberById, 
+  findMemberByAdmissionNumber 
+} from "./memberService";
 
-export type TimeSlot = "Morning" | "Afternoon" | "BeforeGym" | "AfterGym" | "Evening" | "Night";
+import { 
+  createDietPlan, 
+  updateDietPlan as updatePlan, 
+  togglePlanPin, 
+  getDietPlansByMemberId 
+} from "./dietPlanService";
 
-export type NutritionSummary = {
-  protein: number;
-  carbs: number;
-  fats: number;
-};
+import { 
+  createFee, 
+  updateFee, 
+  getDueFees as getOverdueFees, 
+  getFeesByMemberId as getFeesByMember 
+} from "./feeService";
 
-export type DietPlan = {
-  id: string;
-  memberId: string;
-  memberName: string;
-  admissionNumber: string;
-  weight?: string;
-  date: string;
-  meals: Record<TimeSlot, MealItem[]>;
-  nutrition?: NutritionSummary;
-  isPinned?: boolean;
-};
-
-export type ContactInfo = {
-  phone: string;
-  instagram: string;
-};
-
-export type GymStats = {
-  activeMembers: number;
-  trainers: number;
-  operationalHoursTitle: string;
-  operationalHours: string;
-};
-
-export type Profile = {
-  name: string;
-  photo: string;
-  achievements: string[];
-  contactInfo?: ContactInfo;
-  stats?: GymStats;
-};
-
-export type Fee = {
-  id: string;
-  memberId: string;
-  memberName: string;
-  admissionNumber: string;
-  amount: number;
-  paymentDate: string;
-  startDate: string;
-  endDate: string;
-  feeType: string; // Monthly, Quarterly, Half-Year, Full-Year
-  status: "Paid" | "Due" | "Overdue";
-  createdAt: string;
-};
-
-// Define context type
-type AppContextType = {
-  members: Member[];
-  dietPlans: DietPlan[];
-  fees: Fee[];
-  profile: Profile;
-  addMember: (member: Member) => string;
-  addDietPlan: (plan: DietPlan) => void;
-  updateDietPlan: (plan: DietPlan) => void;
-  togglePinPlan: (planId: string) => void;
-  updateProfile: (profile: Partial<Profile>) => void;
-  updateContactInfo: (contactInfo: ContactInfo) => void;
-  updateStats: (stats: GymStats) => void;
-  getMemberById: (id: string) => Member | undefined;
-  getMemberByAdmissionNumber: (admissionNumber: string) => Member | undefined;
-  getDietPlansByMemberId: (memberId: string) => DietPlan[];
-  calculateNutrition: (meals: Record<TimeSlot, MealItem[]>) => NutritionSummary;
-  deleteDietPlan: (planId: string) => void;
-  addFee: (fee: Omit<Fee, "id" | "createdAt">) => void;
-  updateFeeStatus: (feeId: string, status: Fee["status"]) => void;
-  getDueFees: () => Fee[];
-  getFeesByMemberId: (memberId: string) => Fee[];
-};
+import { calculateNutrition } from "./utils";
 
 // Create context
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -160,74 +97,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem("profile", JSON.stringify(profile));
   }, [profile]);
 
-  const calculateNutrition = (meals: Record<TimeSlot, MealItem[]>): NutritionSummary => {
-    const summary: NutritionSummary = {
-      protein: 0,
-      carbs: 0,
-      fats: 0
-    };
-
-    Object.values(meals).forEach(mealList => {
-      mealList.forEach(meal => {
-        if (meal.mealId) {
-          const mealData = getMealById(meal.mealId);
-          if (mealData && mealData.nutrition[meal.quantity]) {
-            const nutrition = mealData.nutrition[meal.quantity];
-            summary.protein += nutrition.protein;
-            summary.carbs += nutrition.carbs;
-            summary.fats += nutrition.fats;
-          }
-        }
-      });
-    });
-
-    return summary;
-  };
-
-  const generateAdmissionNumber = (): string => {
-    let highestNum = 0;
-    
-    members.forEach(member => {
-      // Change to look for purely numeric admission numbers
-      const num = parseInt(member.admissionNumber);
-      if (!isNaN(num) && num > highestNum) {
-        highestNum = num;
-      }
-    });
-    
-    // Format with leading zeros (e.g., 0001)
-    return String(highestNum + 1).padStart(4, '0');
-  };
-
+  // Member functions
   const addMember = (member: Member): string => {
-    const admissionNumber = generateAdmissionNumber();
-    const newMember = { 
-      ...member, 
-      id: uuidv4(), 
-      admissionNumber,
-      registrationDate: new Date().toISOString()
-    };
-    
+    const { newMember, admissionNumber } = createMember(members, member);
     setMembers(prev => [...prev, newMember]);
     return admissionNumber;
   };
 
+  const getMemberById = (id: string) => {
+    return findMemberById(members, id);
+  };
+
+  const getMemberByAdmissionNumber = (admissionNumber: string) => {
+    return findMemberByAdmissionNumber(members, admissionNumber);
+  };
+
+  // Diet plan functions
   const addDietPlan = (plan: DietPlan) => {
-    const nutrition = calculateNutrition(plan.meals);
-    const updatedPlan = {
-      ...plan,
-      nutrition,
-      isPinned: false
-    };
-    setDietPlans(prev => [...prev, updatedPlan]);
+    const newPlan = createDietPlan(plan);
+    setDietPlans(prev => [...prev, newPlan]);
   };
 
   const updateDietPlan = (plan: DietPlan) => {
-    const nutrition = calculateNutrition(plan.meals);
-    const updatedPlan = {
-      ...plan,
-      nutrition
-    };
+    const updatedPlan = updatePlan(plan);
     setDietPlans(prev => prev.map(p => p.id === plan.id ? updatedPlan : p));
   };
 
@@ -235,7 +127,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setDietPlans(prev => 
       prev.map(plan => 
         plan.id === planId 
-          ? { ...plan, isPinned: !plan.isPinned } 
+          ? togglePlanPin(plan) 
           : plan
       )
     );
@@ -245,6 +137,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setDietPlans(prev => prev.filter(plan => plan.id !== planId));
   };
 
+  // Profile functions
   const updateProfile = (updatedProfile: Partial<Profile>) => {
     setProfile(prev => ({ ...prev, ...updatedProfile }));
   };
@@ -263,44 +156,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   };
 
-  const getMemberById = (id: string) => {
-    return members.find(member => member.id === id);
-  };
-
-  const getMemberByAdmissionNumber = (admissionNumber: string) => {
-    return members.find(member => member.admissionNumber === admissionNumber);
-  };
-
-  const getDietPlansByMemberId = (memberId: string) => {
-    return dietPlans.filter(plan => plan.memberId === memberId);
-  };
-
+  // Fee functions
   const addFee = (feeData: Omit<Fee, "id" | "createdAt">) => {
-    const newFee: Fee = {
-      ...feeData,
-      id: uuidv4(),
-      createdAt: new Date().toISOString(),
-    };
+    const newFee = createFee(feeData);
     setFees(prev => [...prev, newFee]);
   };
 
   const updateFeeStatus = (feeId: string, status: Fee["status"]) => {
     setFees(prev => prev.map(fee => 
-      fee.id === feeId ? { ...fee, status } : fee
+      fee.id === feeId ? updateFee(fee, status) : fee
     ));
   };
 
   const getDueFees = () => {
-    const today = new Date();
-    return fees.filter(fee => {
-      if (fee.status === "Paid") return false;
-      const endDate = new Date(fee.endDate);
-      return endDate < today;
-    });
+    return getOverdueFees(fees);
   };
 
   const getFeesByMemberId = (memberId: string) => {
-    return fees.filter(fee => fee.memberId === memberId);
+    return getFeesByMember(fees, memberId);
   };
 
   return (
@@ -319,7 +192,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateStats,
         getMemberById,
         getMemberByAdmissionNumber,
-        getDietPlansByMemberId,
+        getDietPlansByMemberId: (memberId) => getDietPlansByMemberId(dietPlans, memberId),
         calculateNutrition,
         deleteDietPlan,
         addFee,
@@ -340,3 +213,6 @@ export const useAppContext = () => {
   }
   return context;
 };
+
+// Re-export all types from types.ts for easier imports elsewhere
+export * from "./types";
