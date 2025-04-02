@@ -17,3 +17,7 @@
   IMPORT_PATH = "github.com/LovableProjects/DietPlan"
   BINDIR = "golang/bin"
 
+# Git reference configuration
+[git]
+  clean_command = "git clean -d -X -f"
+  quiet = true
