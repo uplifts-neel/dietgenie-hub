@@ -11,3 +11,9 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+# Add specific Go runtime settings
+[build.environment.GO]
+  IMPORT_PATH = "github.com/LovableProjects/DietPlan"
+  BINDIR = "golang/bin"
+

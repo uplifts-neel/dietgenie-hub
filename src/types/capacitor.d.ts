@@ -11,8 +11,16 @@ interface CapacitorGlobal {
     };
     [key: string]: any;
   };
+  getPlatform?: () => string;
+  convertFileSrc?: (filePath: string) => string;
 }
 
 interface Window {
   Capacitor?: CapacitorGlobal;
+}
+
+// Ensure Go types don't cause issues
+declare module 'go' {
+  const go: any;
+  export default go;
 }

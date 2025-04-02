@@ -39,12 +39,17 @@ const CapacitorBackButton = () => {
       }
     };
 
+    // Check if Capacitor is available before adding listener
     if (window.Capacitor && window.Capacitor.isNativePlatform()) {
-      CapApp.addListener('backButton', handleBackButton);
-      
-      return () => {
-        CapApp.removeAllListeners();
-      };
+      try {
+        CapApp.addListener('backButton', handleBackButton);
+        
+        return () => {
+          CapApp.removeAllListeners();
+        };
+      } catch (error) {
+        console.error("Error setting up Capacitor back button:", error);
+      }
     }
   }, [location.pathname, navigate]);
 
@@ -53,6 +58,7 @@ const CapacitorBackButton = () => {
 
 const App = () => {
   const [isCapacitorInitialized, setIsCapacitorInitialized] = useState(false);
+  const [initializationError, setInitializationError] = useState<string | null>(null);
 
   useEffect(() => {
     document.documentElement.classList.add('dark');
@@ -62,19 +68,33 @@ const App = () => {
     const initCapacitor = async () => {
       try {
         if (window.Capacitor && window.Capacitor.isNativePlatform()) {
-          if (window.Capacitor.Plugins.StatusBar) {
-            window.Capacitor.Plugins.StatusBar.setStyle({ style: 'DARK' });
-            window.Capacitor.Plugins.StatusBar.setBackgroundColor({ color: '#1a1a1a' });
+          if (window.Capacitor.Plugins && window.Capacitor.Plugins.StatusBar) {
+            try {
+              await window.Capacitor.Plugins.StatusBar.setStyle({ style: 'DARK' });
+              await window.Capacitor.Plugins.StatusBar.setBackgroundColor({ color: '#1a1a1a' });
+            } catch (statusBarError) {
+              console.warn("StatusBar plugin error:", statusBarError);
+              // Continue even if StatusBar fails
+            }
           }
+          setIsCapacitorInitialized(true);
+        } else if (window.Capacitor) {
+          // Web environment with Capacitor loaded
           setIsCapacitorInitialized(true);
         }
       } catch (error) {
         console.error("Failed to initialize Capacitor:", error);
+        setInitializationError(`Failed to initialize Capacitor: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     };
     
     initCapacitor();
   }, []);
+
+  if (initializationError) {
+    console.error("Capacitor initialization error:", initializationError);
+    // We continue rendering the app even with initialization errors
+  }
 
   return (
     <QueryClientProvider client={queryClient}>

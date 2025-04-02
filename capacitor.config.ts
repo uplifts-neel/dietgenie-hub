@@ -7,7 +7,9 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   server: {
     androidScheme: 'https',
-    url: 'https://aeb552de-085d-457a-834d-a8509c836e13.lovableproject.com?forceHideBadge=true',
+    url: process.env.NODE_ENV === 'development' 
+      ? 'http://localhost:8080' 
+      : 'https://aeb552de-085d-457a-834d-a8509c836e13.lovableproject.com?forceHideBadge=true',
     cleartext: true
   },
   plugins: {
