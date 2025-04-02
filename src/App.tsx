@@ -58,14 +58,22 @@ const App = () => {
     document.documentElement.classList.add('dark');
     document.body.classList.add('bg-gradient-to-br', 'from-[#1a1a1a]', 'via-[#232323]', 'to-[#1a1a1a]');
     
-    if (window.Capacitor && window.Capacitor.isNativePlatform()) {
-      if (window.Capacitor.Plugins.StatusBar) {
-        window.Capacitor.Plugins.StatusBar.setStyle({ style: 'DARK' });
-        window.Capacitor.Plugins.StatusBar.setBackgroundColor({ color: '#1a1a1a' });
+    // Check if running in Capacitor environment and initialize
+    const initCapacitor = async () => {
+      try {
+        if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+          if (window.Capacitor.Plugins.StatusBar) {
+            window.Capacitor.Plugins.StatusBar.setStyle({ style: 'DARK' });
+            window.Capacitor.Plugins.StatusBar.setBackgroundColor({ color: '#1a1a1a' });
+          }
+          setIsCapacitorInitialized(true);
+        }
+      } catch (error) {
+        console.error("Failed to initialize Capacitor:", error);
       }
-      
-      setIsCapacitorInitialized(true);
-    }
+    };
+    
+    initCapacitor();
   }, []);
 
   return (

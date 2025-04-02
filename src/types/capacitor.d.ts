@@ -6,8 +6,8 @@ interface CapacitorGlobal {
   isNativePlatform(): boolean;
   Plugins: {
     StatusBar?: {
-      setStyle: (options: { style: string }) => void;
-      setBackgroundColor: (options: { color: string }) => void;
+      setStyle: (options: { style: string }) => Promise<void>;
+      setBackgroundColor: (options: { color: string }) => Promise<void>;
     };
     [key: string]: any;
   };
