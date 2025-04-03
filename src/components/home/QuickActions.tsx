@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { NavigateFunction } from "react-router-dom";
-import { Plus, Clock } from "lucide-react";
+import { Plus, Clock, FileText } from "lucide-react";
 
 type QuickActionsProps = {
   navigate: NavigateFunction;
@@ -25,6 +25,14 @@ const QuickActions = ({ navigate }: QuickActionsProps) => {
       >
         <Clock className="mr-2 h-5 w-5" />
         History
+      </Button>
+      <Button
+        onClick={() => navigate("/registration")}
+        className="flex-1 button-glow bg-gradient-to-r from-purple-500 to-purple-500/80 hover:from-purple-500 hover:to-purple-500 py-6 text-white animate-scale-in"
+        variant="outline"
+      >
+        <FileText className="mr-2 h-5 w-5" />
+        Register
       </Button>
     </div>
   );
