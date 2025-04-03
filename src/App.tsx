@@ -9,6 +9,7 @@ import History from './pages/History';
 import Settings from './pages/Settings';
 import NotFound from './pages/NotFound';
 import SplashScreen from './pages/SplashScreen';
+import Index from './pages/Index';
 import { useEffect, useState } from 'react';
 
 const App = () => {
@@ -30,7 +31,7 @@ const App = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Navigate to="/home" replace />} />
+        <Route path="/" element={<Index />} />
         <Route path="/" element={<Layout />}>
           <Route path="home" element={<Home />} />
           <Route path="diet-plan" element={<DietPlan />} />
