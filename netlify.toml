@@ -1,23 +1,12 @@
 
 [build]
-  command = "npm install --legacy-peer-deps && npm run build"
+  command = "npm run build"
   publish = "dist"
   
 [build.environment]
   NODE_VERSION = "18"
-  GO_VERSION = "1.19"
 
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-
-# Add specific Go runtime settings
-[build.environment.GO]
-  IMPORT_PATH = "github.com/LovableProjects/DietPlan"
-  BINDIR = "golang/bin"
-
-# Git reference configuration
-[git]
-  clean_command = "git clean -d -X -f"
-  quiet = true
