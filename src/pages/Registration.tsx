@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
@@ -33,7 +32,6 @@ const Registration = () => {
   const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
     
-    // Update fee end date based on fee type
     if (name === "feeType") {
       const startDate = new Date(formData.feeStartDate);
       let endDate = new Date(startDate);
@@ -65,17 +63,15 @@ const Registration = () => {
     setSubmitting(true);
 
     try {
-      // Validate form fields
       if (!formData.name || !formData.phone || !formData.address || !formData.dateOfBirth) {
         toast.error("Please fill all required fields");
         setSubmitting(false);
         return;
       }
 
-      // Add the member to the database and get the admission number
       const newAdmissionNumber = addMember({
-        id: "",  // Will be generated in addMember
-        admissionNumber: "", // Will be generated in addMember
+        id: "",
+        admissionNumber: "",
         name: formData.name,
         phone: formData.phone,
         address: formData.address,
@@ -84,9 +80,8 @@ const Registration = () => {
         admissionType: formData.admissionType,
       });
 
-      // Add fee record
       addFee({
-        memberId: "", // Will be updated below with the correct memberId
+        memberId: "",
         memberName: formData.name,
         admissionNumber: newAdmissionNumber,
         amount: Number(formData.feeAmount),
@@ -99,7 +94,6 @@ const Registration = () => {
 
       setAdmissionNumber(newAdmissionNumber);
       
-      // Reset form data
       setFormData({
         name: "",
         phone: "",
@@ -177,7 +171,7 @@ const Registration = () => {
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  className="bg-white/10 border-white/20 text-white mt-1"
+                  className="bg-white/10 border-white/20 text-white placeholder-white/50 mt-1"
                   placeholder="Enter full name"
                   required
                 />
@@ -190,7 +184,7 @@ const Registration = () => {
                   name="phone"
                   value={formData.phone}
                   onChange={handleInputChange}
-                  className="bg-white/10 border-white/20 text-white mt-1"
+                  className="bg-white/10 border-white/20 text-white placeholder-white/50 mt-1"
                   placeholder="Enter phone number"
                   required
                 />
@@ -203,7 +197,7 @@ const Registration = () => {
                   name="address"
                   value={formData.address}
                   onChange={handleInputChange}
-                  className="bg-white/10 border-white/20 text-white mt-1"
+                  className="bg-white/10 border-white/20 text-white placeholder-white/50 mt-1"
                   placeholder="Enter address"
                   required
                 />
@@ -217,7 +211,10 @@ const Registration = () => {
                   type="date"
                   value={formData.dateOfBirth}
                   onChange={handleInputChange}
-                  className="bg-white/10 border-white/20 text-white mt-1"
+                  className="bg-white/10 border-white/20 text-white mt-1 
+                    [&::-webkit-calendar-picker-indicator]:invert 
+                    [&::-webkit-calendar-picker-indicator]:brightness-0 
+                    [&::-webkit-calendar-picker-indicator]:opacity-60"
                   required
                 />
               </div>
@@ -231,14 +228,13 @@ const Registration = () => {
                   <SelectTrigger className="bg-white/10 border-white/20 text-white mt-1">
                     <SelectValue placeholder="Select admission type" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Non-PT">Non-PT</SelectItem>
-                    <SelectItem value="PT">PT</SelectItem>
+                  <SelectContent className="bg-dark-theme border-white/10">
+                    <SelectItem value="Non-PT" className="focus:bg-white/10 hover:bg-white/20">Non-PT</SelectItem>
+                    <SelectItem value="PT" className="focus:bg-white/10 hover:bg-white/20">PT</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               
-              {/* Fees Section */}
               <div className="border-t border-white/10 pt-4 mt-4">
                 <h3 className="text-lg font-semibold text-white mb-3">Fees Details</h3>
                 
@@ -251,11 +247,11 @@ const Registration = () => {
                     <SelectTrigger className="bg-white/10 border-white/20 text-white mt-1">
                       <SelectValue placeholder="Select fee type" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Monthly">Monthly</SelectItem>
-                      <SelectItem value="Quarterly">Quarterly</SelectItem>
-                      <SelectItem value="Half-Year">Half-Year</SelectItem>
-                      <SelectItem value="Full-Year">Full-Year</SelectItem>
+                    <SelectContent className="bg-dark-theme border-white/10">
+                      <SelectItem value="Monthly" className="focus:bg-white/10 hover:bg-white/20">Monthly</SelectItem>
+                      <SelectItem value="Quarterly" className="focus:bg-white/10 hover:bg-white/20">Quarterly</SelectItem>
+                      <SelectItem value="Half-Year" className="focus:bg-white/10 hover:bg-white/20">Half-Year</SelectItem>
+                      <SelectItem value="Full-Year" className="focus:bg-white/10 hover:bg-white/20">Full-Year</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
