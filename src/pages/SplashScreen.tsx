@@ -1,18 +1,5 @@
 
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-
 const SplashScreen = () => {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      navigate("/home");
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [navigate]);
-
   return (
     <div className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#1a1a1a] via-[#232323] to-[#1a1a1a]">
       <div className="animate-float">
