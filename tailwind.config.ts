@@ -53,9 +53,11 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				"coral-red": "#FF6B6B",
-				"turquoise": "#4ECDC4",
-				"dark-theme": "#1a1a1a",
+				"professional-blue": "#0070f3",
+				"professional-dark": "#1c2331",
+				"professional-light": "#f7f9fc",
+				"dark-navy": "#1c2331",
+				"medium-navy": "#2c3e50",
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',

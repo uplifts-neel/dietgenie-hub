@@ -75,14 +75,14 @@ const Settings = () => {
   };
 
   return (
-    <div className="min-h-screen p-6 pb-20">
-      <h1 className="text-2xl font-bold text-white mb-6">Settings</h1>
+    <div className="min-h-screen p-6 pb-20 bg-sidebar-background">
+      <h1 className="text-2xl font-bold text-sidebar-foreground mb-6">Settings</h1>
 
       <Card className="glass-card border-none animate-fade-in mb-6">
         <CardContent className="p-6">
           <div className="flex flex-col items-center">
             <div 
-              className="relative w-32 h-32 rounded-full bg-gradient-to-r from-coral-red to-turquoise p-1 cursor-pointer"
+              className="relative w-32 h-32 rounded-full bg-gradient-to-r from-primary to-secondary p-1 cursor-pointer"
               onClick={() => fileInputRef.current?.click()}
             >
               {profile.photo ? (
@@ -92,11 +92,11 @@ const Settings = () => {
                   className="w-full h-full rounded-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full rounded-full bg-gray-800 flex items-center justify-center text-white text-3xl font-bold">
+                <div className="w-full h-full rounded-full bg-secondary flex items-center justify-center text-white text-3xl font-bold">
                   <User size={48} />
                 </div>
               )}
-              <div className="absolute bottom-0 right-0 bg-coral-red text-white p-2 rounded-full shadow-lg">
+              <div className="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full shadow-lg">
                 <Edit2 size={16} />
               </div>
             </div>
@@ -109,15 +109,15 @@ const Settings = () => {
             />
             
             <div className="w-full mt-6">
-              <Label htmlFor="name" className="text-white">Gym Name</Label>
+              <Label htmlFor="name" className="text-sidebar-foreground">Gym Name</Label>
               <div className="flex gap-2 mt-1">
                 <Input
                   id="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="bg-white/10 border-white/20 text-white"
+                  className="bg-sidebar-accent/30 border-sidebar-border text-sidebar-foreground"
                 />
-                <Button onClick={handleNameChange} className="bg-coral-red hover:bg-coral-red/90">
+                <Button onClick={handleNameChange} className="bg-primary hover:bg-primary/90">
                   Save
                 </Button>
               </div>
@@ -129,34 +129,34 @@ const Settings = () => {
       <Card className="glass-card border-none animate-fade-in mb-6">
         <CardContent className="p-6">
           <div className="flex items-center mb-4">
-            <Phone className="mr-2 text-turquoise" />
-            <h2 className="text-xl font-semibold text-white">Contact Information</h2>
+            <Phone className="mr-2 text-primary" />
+            <h2 className="text-xl font-semibold text-sidebar-foreground">Contact Information</h2>
           </div>
 
           <div className="space-y-4">
             <div>
-              <Label htmlFor="phone" className="text-white">Phone Number</Label>
+              <Label htmlFor="phone" className="text-sidebar-foreground">Phone Number</Label>
               <Input
                 id="phone"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="bg-white/10 border-white/20 text-white mt-1"
+                className="bg-sidebar-accent/30 border-sidebar-border text-sidebar-foreground mt-1"
                 placeholder="Enter phone number"
               />
             </div>
 
             <div>
-              <Label htmlFor="instagram" className="text-white">Instagram</Label>
+              <Label htmlFor="instagram" className="text-sidebar-foreground">Instagram</Label>
               <Input
                 id="instagram"
                 value={instagram}
                 onChange={(e) => setInstagram(e.target.value)}
-                className="bg-white/10 border-white/20 text-white mt-1"
+                className="bg-sidebar-accent/30 border-sidebar-border text-sidebar-foreground mt-1"
                 placeholder="Enter Instagram handle"
               />
             </div>
 
-            <Button onClick={handleContactInfoChange} className="w-full bg-turquoise hover:bg-turquoise/90">
+            <Button onClick={handleContactInfoChange} className="w-full bg-primary hover:bg-primary/90">
               Save Contact Info
             </Button>
           </div>
@@ -166,54 +166,54 @@ const Settings = () => {
       <Card className="glass-card border-none animate-fade-in mb-6">
         <CardContent className="p-6">
           <div className="flex items-center mb-4">
-            <Users className="mr-2 text-turquoise" />
-            <h2 className="text-xl font-semibold text-white">Gym Statistics</h2>
+            <Users className="mr-2 text-primary" />
+            <h2 className="text-xl font-semibold text-sidebar-foreground">Gym Statistics</h2>
           </div>
 
           <div className="space-y-4">
             <div>
-              <Label htmlFor="activeMembers" className="text-white">Active Members</Label>
+              <Label htmlFor="activeMembers" className="text-sidebar-foreground">Active Members</Label>
               <Input
                 id="activeMembers"
                 type="number"
                 value={activeMembers}
                 onChange={(e) => setActiveMembers(parseInt(e.target.value) || 0)}
-                className="bg-white/10 border-white/20 text-white mt-1"
+                className="bg-sidebar-accent/30 border-sidebar-border text-sidebar-foreground mt-1"
               />
             </div>
 
             <div>
-              <Label htmlFor="trainers" className="text-white">Trainers</Label>
+              <Label htmlFor="trainers" className="text-sidebar-foreground">Trainers</Label>
               <Input
                 id="trainers"
                 type="number"
                 value={trainers}
                 onChange={(e) => setTrainers(parseInt(e.target.value) || 0)}
-                className="bg-white/10 border-white/20 text-white mt-1"
+                className="bg-sidebar-accent/30 border-sidebar-border text-sidebar-foreground mt-1"
               />
             </div>
 
             <div>
-              <Label htmlFor="operHoursTitle" className="text-white">Operational Hours Title</Label>
+              <Label htmlFor="operHoursTitle" className="text-sidebar-foreground">Operational Hours Title</Label>
               <Input
                 id="operHoursTitle"
                 value={operHoursTitle}
                 onChange={(e) => setOperHoursTitle(e.target.value)}
-                className="bg-white/10 border-white/20 text-white mt-1"
+                className="bg-sidebar-accent/30 border-sidebar-border text-sidebar-foreground mt-1"
               />
             </div>
 
             <div>
-              <Label htmlFor="operHours" className="text-white">Operational Hours</Label>
+              <Label htmlFor="operHours" className="text-sidebar-foreground">Operational Hours</Label>
               <Input
                 id="operHours"
                 value={operHours}
                 onChange={(e) => setOperHours(e.target.value)}
-                className="bg-white/10 border-white/20 text-white mt-1"
+                className="bg-sidebar-accent/30 border-sidebar-border text-sidebar-foreground mt-1"
               />
             </div>
 
-            <Button onClick={handleStatsChange} className="w-full bg-coral-red hover:bg-coral-red/90">
+            <Button onClick={handleStatsChange} className="w-full bg-primary hover:bg-primary/90">
               Save Gym Stats
             </Button>
           </div>
@@ -223,8 +223,8 @@ const Settings = () => {
       <Card className="glass-card border-none animate-fade-in">
         <CardContent className="p-6">
           <div className="flex items-center mb-4">
-            <Award className="mr-2 text-turquoise" />
-            <h2 className="text-xl font-semibold text-white">Achievements</h2>
+            <Award className="mr-2 text-primary" />
+            <h2 className="text-xl font-semibold text-sidebar-foreground">Achievements</h2>
           </div>
 
           <div className="space-y-4">
@@ -233,9 +233,9 @@ const Settings = () => {
                 value={achievement}
                 onChange={(e) => setAchievement(e.target.value)}
                 placeholder="Add new achievement"
-                className="bg-white/10 border-white/20 text-white"
+                className="bg-sidebar-accent/30 border-sidebar-border text-sidebar-foreground"
               />
-              <Button onClick={handleAddAchievement} className="bg-turquoise hover:bg-turquoise/90">
+              <Button onClick={handleAddAchievement} className="bg-primary hover:bg-primary/90">
                 Add
               </Button>
             </div>
@@ -244,9 +244,9 @@ const Settings = () => {
               {profile.achievements.map((item, index) => (
                 <div 
                   key={index} 
-                  className="flex justify-between items-center p-3 bg-white/5 rounded-lg"
+                  className="flex justify-between items-center p-3 bg-sidebar-accent/30 rounded-lg"
                 >
-                  <span className="text-white">{item}</span>
+                  <span className="text-sidebar-foreground">{item}</span>
                   <Button
                     variant="ghost"
                     size="sm"

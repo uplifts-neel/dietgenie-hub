@@ -21,7 +21,12 @@ const App = () => {
       setLoading(false);
     }, 2000);
     
-    return () => clearTimeout(timer);
+    // Add dark mode class to body
+    document.documentElement.classList.add('dark');
+    
+    return () => {
+      clearTimeout(timer);
+    };
   }, []);
 
   return (

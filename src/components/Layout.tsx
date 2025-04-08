@@ -17,12 +17,12 @@ const Layout = () => {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-dark-theme">
+    <div className="flex flex-col min-h-screen bg-sidebar-background">
       <main className="flex-1 pb-16">
         <Outlet />
       </main>
       
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-coral-red/30 to-turquoise/30 backdrop-blur-xl border-t border-white/20 shadow-lg">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-primary/10 to-secondary/10 backdrop-blur-xl border-t border-sidebar-border shadow-lg">
         <div className="flex justify-around items-center h-16 max-w-4xl mx-auto">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
@@ -33,13 +33,13 @@ const Layout = () => {
                 className={cn(
                   "flex flex-col items-center justify-center w-full h-full transition-all duration-300",
                   isActive 
-                    ? "text-coral-red translate-y-[-4px]" 
-                    : "text-gray-400 hover:text-turquoise"
+                    ? "text-primary translate-y-[-4px]" 
+                    : "text-sidebar-foreground/60 hover:text-primary/80"
                 )}
               >
                 <div className={cn(
                   "relative p-2 rounded-full transition-all duration-300",
-                  isActive && "bg-white/10 shadow-lg"
+                  isActive && "bg-sidebar-accent shadow-lg"
                 )}>
                   <item.icon 
                     className={cn(
@@ -48,7 +48,7 @@ const Layout = () => {
                     )} 
                   />
                   {isActive && (
-                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-coral-red rounded-full" />
+                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full" />
                   )}
                 </div>
                 <span className={cn(
