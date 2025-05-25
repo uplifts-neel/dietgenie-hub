@@ -1,6 +1,5 @@
 
-// Only render the DietPlan page at all times:
-
+import React from "react";
 import DietPlan from './pages/DietPlan';
 
 const App = () => {
